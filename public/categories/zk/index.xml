@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Zk on truthixify</title>
+    <link>http://localhost:1313/categories/zk/</link>
+    <description>Recent content in Zk on truthixify</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 09 Jan 2025 15:17:20 +0100</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/zk/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Unlocking the Power of Zero-Knowledge Cryptography</title>
+      <link>http://localhost:1313/blog/unlocking-the-power-of-zero-knowledge-cryptography/</link>
+      <pubDate>Thu, 09 Jan 2025 15:17:20 +0100</pubDate>
+      <guid>http://localhost:1313/blog/unlocking-the-power-of-zero-knowledge-cryptography/</guid>
+      <description>&lt;h3 id=&#34;unlocking-the-power-of-zero-knowledge-cryptography&#34;&gt;Unlocking the Power of Zero-Knowledge Cryptography&lt;/h3&gt;&#xA;&lt;p&gt;In a world where data privacy is more critical than ever, Zero-Knowledge (ZK) cryptography is emerging as a revolutionary force. With applications spanning from secure transactions to decentralized identity, ZK technology promises a future where trust can be established without compromising privacy. But what exactly is ZK, and why does it matter? Let’s dive in.&lt;/p&gt;&#xA;&lt;hr&gt;&#xA;&lt;h4 id=&#34;what-is-zero-knowledge-proof&#34;&gt;What is Zero-Knowledge Proof?&lt;/h4&gt;&#xA;&lt;p&gt;At its core, a Zero-Knowledge Proof (ZKP) is a cryptographic method that allows one party (the prover) to prove to another party (the verifier) that a statement is true, without revealing any additional information beyond the fact that the statement is true. It’s like proving you know the password to a safe without ever revealing the password itself.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
