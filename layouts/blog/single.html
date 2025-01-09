@@ -4,7 +4,7 @@
   <time class="post-time">{{ dateFormat .Site.Params.dateFormat .Date}}</time>
   <div class="post-categories">
     {{ range (.GetTerms "categories") }}
-      <a href="{{ .Permalink }}" class="">{{ .Name }}</a>
+      <a href="{{ .RelPermalink }}" class="">{{ .Name }}</a>
     {{ end }}
   </div>
   {{ .Content }}

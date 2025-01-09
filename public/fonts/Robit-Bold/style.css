@@ -1,9 +1,0 @@
-@font-face {
-    font-family: 'Robit';
-    src: local('Robit Bold'), local('Robit-Bold'),
-        url('Robit-Bold.woff2') format('woff2'),
-        url('Robit-Bold.woff') format('woff'),
-        url('Robit-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-  }

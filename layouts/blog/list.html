@@ -7,11 +7,11 @@
     </p>
     <ul>
       {{ range .Pages.GroupByDate "2006" }}
-      <h2 class="">{{ .Key }}</h2>
+        <h2 class="">{{ .Key }}</h2>
         {{ range .Pages }}
           <li class="">
             <p>{{ .Date.Format "Jan 2" }}</p>
-            <a href="{{ .Permalink }}">{{ .Title }}</a>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
           </li>
         {{ end }}
       {{ end }}
