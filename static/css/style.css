@@ -174,6 +174,7 @@ ul li {
   top: 0;
   left: 1px;
   transform: var(--translate, translate(0, 1px));
+  transition: ease-in 0.1s;
 }
 
 .category ul {

@@ -3,23 +3,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const body = document.body;
 
   const savedTheme = localStorage.getItem("theme");
-  if (!savedTheme) {
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (systemPrefersDark) {
+
+  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  if (savedTheme) {
+    if (savedTheme === "dark-mode") {
       body.classList.add("dark-mode");
+      themeBtn.style.setProperty("--translate", "translate(18px, 1px)");
+    } else {
+      body.classList.remove("dark-mode");
+      themeBtn.style.setProperty("--translate", "translate(0px, 1px)");
     }
   } else {
-    body.classList.add(savedTheme);
+    if (systemPrefersDark) {
+      body.classList.add("dark-mode");
+      themeBtn.style.setProperty("--translate", "translate(18px, 1px)");
+    } else {
+      body.classList.remove("dark-mode");
+      themeBtn.style.setProperty("--translate", "translate(0px, 1px)");
+    }
   }
 
   themeBtn.addEventListener("click", () => {
     if (body.classList.contains("dark-mode")) {
-      themeBtn.style.setProperty('--translate', 'translate(18px, 1px)');
       body.classList.remove("dark-mode");
-      localStorage.setItem("theme", "");
+      themeBtn.style.setProperty("--translate", "translate(0px, 1px)");
+      localStorage.setItem("theme", "light-mode");
     } else {
-      themeBtn.style.setProperty('--translate', 'translate(0, 1px)');
       body.classList.add("dark-mode");
+      themeBtn.style.setProperty("--translate", "translate(18px, 1px)");
       localStorage.setItem("theme", "dark-mode");
     }
   });
