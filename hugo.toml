@@ -1,0 +1,16 @@
+baseURL = 'https://truthixify.pages.dev'
+languageCode = 'en-us'
+title = 'truthixify'
+
+[params]
+  dateFormat = "Jan 2, 2006"
+  [params.contact]
+    email = 'truthixify@gmail.com'
+    github = 'https://github.com/truthixify'
+    phone = '+234 810 530 9925'
+    twitter = 'https://x.com/truthixifi'
+    discord = 'truthixifi'
+    resume = '/resume.pdf'
+
+[taxonomies]
+category = "categories"

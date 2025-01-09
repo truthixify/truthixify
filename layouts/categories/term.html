@@ -1,0 +1,13 @@
+{{ define "content" }}
+  <main class="category">
+    <h3>Posts in the "{{ .Title }}" Category:</h3>
+    <ul>
+      {{ range .Pages }}
+        <li>
+          <p>{{ .Date.Format "Jan 2, 2006" }}</p>
+          <a href="{{ .Permalink }}">{{ .Title }}</a>
+        </li>
+      {{ end }}
+    </ul>
+  </main>
+{{ end }}

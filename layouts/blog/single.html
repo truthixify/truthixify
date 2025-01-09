@@ -1,0 +1,12 @@
+{{ define "content" }}
+<div class="post">
+  <h1 class="post-title">{{ .Title }}</h1>
+  <time class="post-time">{{ dateFormat .Site.Params.dateFormat .Date}}</time>
+  <div class="post-categories">
+    {{ range (.GetTerms "categories") }}
+      <a href="{{ .Permalink }}" class="">{{ .Name }}</a>
+    {{ end }}
+  </div>
+  {{ .Content }}
+</div>
+{{ end }}

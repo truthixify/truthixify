@@ -1,0 +1,20 @@
+{{ define "content" }}
+  <main class="blog">
+    <h1 class="">Blog 📖</h1>
+    <p>Welcome to my Blog!</p>
+    <p>
+      Here, I share what I'm currently learning and building, from cryptography and blockchain to software engineering and beyond. Follow along as I explore new technologies, solve challenges, and document my journey in tech.
+    </p>
+    <ul>
+      {{ range .Pages.GroupByDate "2006" }}
+      <h2 class="">{{ .Key }}</h2>
+        {{ range .Pages }}
+          <li class="">
+            <p>{{ .Date.Format "Jan 2" }}</p>
+            <a href="{{ .Permalink }}">{{ .Title }}</a>
+          </li>
+        {{ end }}
+      {{ end }}
+    </ul>
+  </main>
+{{ end }}
