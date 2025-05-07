@@ -3,7 +3,7 @@ const siteMetadata = {
   author: 'truthixify',
   headerTitle: 'truthxify',
   // description: 'A blog created with Next.js and Tailwind.css',
-  description: 'description',
+  description: 'This blog contains what I’m learning about cryptography and distributed systems, experiments, and thoughts from my journey through the decentralized world.',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://truthixify.vercel.app',
