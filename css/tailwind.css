@@ -12,29 +12,29 @@
 
   /* Colors */
   /* Copied from https://tailwindcss.com/docs/theme#default-theme-variable-reference */
-  --color-primary-50: oklch(0.971 0.014 343.198);
-  --color-primary-100: oklch(0.948 0.028 342.258);
-  --color-primary-200: oklch(0.899 0.061 343.231);
-  --color-primary-300: oklch(0.823 0.12 346.018);
-  --color-primary-400: oklch(0.718 0.202 349.761);
-  --color-primary-500: oklch(0.656 0.241 354.308);
-  --color-primary-600: oklch(0.592 0.249 0.584);
-  --color-primary-700: oklch(0.525 0.223 3.958);
-  --color-primary-800: oklch(0.459 0.187 3.815);
-  --color-primary-900: oklch(0.408 0.153 2.432);
-  --color-primary-950: oklch(0.284 0.109 3.907);
+  --color-primary-50: oklch(0.97 0.015 210);
+  --color-primary-100: oklch(0.94 0.03 210);
+  --color-primary-200: oklch(0.88 0.06 210);
+  --color-primary-300: oklch(0.8 0.11 210);
+  --color-primary-400: oklch(0.7 0.16 210);
+  --color-primary-500: oklch(0.62 0.19 210); /* base teal */
+  --color-primary-600: oklch(0.55 0.185 210);
+  --color-primary-700: oklch(0.47 0.15 210);
+  --color-primary-800: oklch(0.4 0.12 210);
+  --color-primary-900: oklch(0.33 0.095 210);
+  --color-primary-950: oklch(0.22 0.065 210);
 
-  --color-gray-50: oklch(0.985 0.002 247.839);
-  --color-gray-100: oklch(0.967 0.003 264.542);
-  --color-gray-200: oklch(0.928 0.006 264.531);
-  --color-gray-300: oklch(0.872 0.01 258.338);
-  --color-gray-400: oklch(0.707 0.022 261.325);
-  --color-gray-500: oklch(0.551 0.027 264.364);
-  --color-gray-600: oklch(0.446 0.03 256.802);
-  --color-gray-700: oklch(0.373 0.034 259.733);
-  --color-gray-800: oklch(0.278 0.033 256.848);
-  --color-gray-900: oklch(0.21 0.034 264.665);
-  --color-gray-950: oklch(0.13 0.028 261.692);
+  --color-gray-50: oklch(0.965 0.003 260);
+  --color-gray-100: oklch(0.94 0.004 260);
+  --color-gray-200: oklch(0.9 0.006 260);
+  --color-gray-300: oklch(0.85 0.009 260);
+  --color-gray-400: oklch(0.775 0.012 260);
+  --color-gray-500: oklch(0.675 0.015 260);
+  --color-gray-600: oklch(0.575 0.018 260);
+  --color-gray-700: oklch(0.475 0.018 260);
+  --color-gray-800: oklch(0.385 0.017 260);
+  --color-gray-900: oklch(0.295 0.015 260);
+  --color-gray-950: oklch(0.2 0.012 260);
 
   /* Line heights */
   --line-height-11: 2.75rem;
