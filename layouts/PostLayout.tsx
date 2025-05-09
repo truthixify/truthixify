@@ -31,7 +31,7 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags } = content
+  const { filePath, path, slug, date, title, tags, readingTime } = content
   const basePath = path.split('/')[0]
 
   return (
@@ -55,6 +55,14 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               <div>
                 <PageTitle>{title}</PageTitle>
               </div>
+              <dl className="space-y-10">
+                <div className="flex justify-center gap-x-4">
+                  <dt className="sr-only">Reading time</dt>
+                  <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
+                    <span className="inline-flex items-center">{readingTime.text}</span>
+                  </dd>
+                </div>
+              </dl>
             </div>
           </header>
           <div className="grid-rows-[auto_1fr] divide-y divide-gray-200 pb-8 xl:grid xl:grid-cols-4 xl:gap-x-6 xl:divide-y-0 dark:divide-gray-700">
