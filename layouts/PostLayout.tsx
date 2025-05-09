@@ -1,4 +1,6 @@
-import { ReactNode } from 'react'
+'use client'
+
+import { ReactNode, useRef } from 'react'
 import { CoreContent } from 'pliny/utils/contentlayer'
 import type { Blog, Authors } from 'contentlayer/generated'
 import Comments from '@/components/Comments'
@@ -9,7 +11,7 @@ import Image from '@/components/Image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
-import ProgressBar from '@/components/ProgressBar'
+import ProgressBar, { useElementScrollProgress } from '@/components/ProgressBar'
 
 const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
 const discussUrl = (path) =>
@@ -33,12 +35,14 @@ interface LayoutProps {
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
   const { filePath, path, slug, date, title, tags, readingTime } = content
   const basePath = path.split('/')[0]
+  const articleRef = useRef<HTMLDivElement>(null)
+  const progress = useElementScrollProgress(articleRef)
 
   return (
     <SectionContainer>
-      <ProgressBar />
+      <ProgressBar progress={progress} />
       <ScrollTopAndComment />
-      <article>
+      <article ref={articleRef}>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
           <header className="pt-6 xl:pb-6">
             <div className="space-y-1 text-center">
