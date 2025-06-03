@@ -12,6 +12,12 @@ const projectsData: Project[] = [
     imgSrc: '/static/images/SukuraLogo.svg',
     href: 'https://sukura.vercel.app',
   },
+  {
+    title: 'ZK Word Mastermind',
+    description: 'The classic code-breaking game, reimagined for Web3 — powered by Zero-Knowledge Proofs built with for provable fairness. No trust, just truth.',
+    imgSrc: '/static/images/mastermind.png',
+    href: 'https://word-mastermind.vercel.app/'
+  }
 ]
 
 export default projectsData
