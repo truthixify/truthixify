@@ -21,7 +21,7 @@ const projectsData: Project[] = [
   {
     title: 'Obscura',
     description: 'Obscura is a privacy-focused shielded pool for Starknet, enabling private deposits, transfers, and withdrawals using zero-knowledge proofs and a UTXO-based model.',
-    imgSrc: 'https://obscura-app.vercel.app/logo.png',
+    imgSrc: '/static/images/obscura.png',
     href: 'https://obscura-app.vercel.app/'
   }
 ]
