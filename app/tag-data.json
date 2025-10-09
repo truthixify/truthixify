@@ -1,8 +1,13 @@
 {
-  "journey": 1,
-  "learning": 1,
-  "starknet": 1,
-  "cairo": 1,
+  "tutorial": 1,
+  "learning": 3,
+  "ink": 1,
+  "polkadot": 1,
+  "smart-contract": 1,
+  "journey": 2,
+  "starknet": 2,
+  "cairo": 2,
+  "teaching": 1,
   "cryptography": 1,
   "zk": 1
 }
