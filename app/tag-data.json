@@ -1,13 +1,13 @@
 {
-  "tutorial": 1,
-  "learning": 3,
-  "ink": 1,
-  "polkadot": 1,
-  "smart-contract": 1,
   "journey": 2,
+  "learning": 3,
   "starknet": 2,
   "cairo": 2,
   "teaching": 1,
+  "tutorial": 1,
+  "ink": 1,
+  "polkadot": 1,
+  "smart-contract": 1,
   "cryptography": 1,
   "zk": 1
 }
