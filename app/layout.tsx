@@ -1,42 +1,53 @@
 import 'css/tailwind.css'
-import 'pliny/search/algolia.css'
-import 'remark-github-blockquote-alert/alert.css'
 
-import { Space_Grotesk } from 'next/font/google'
-import { SearchProvider, SearchConfig } from 'pliny/search'
-import Header from '@/components/Header'
-import SectionContainer from '@/components/SectionContainer'
-import Footer from '@/components/Footer'
-import siteMetadata from '@/data/siteMetadata'
+import { Inter, JetBrains_Mono, Fraunces } from 'next/font/google'
 import { ThemeProviders } from './theme-providers'
+import { HeaderWrapper } from '@/components/header-wrapper'
+import { SiteFooter } from '@/components/site-footer'
 import { Metadata } from 'next'
 
-const space_grotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-space-grotesk',
+  variable: '--font-inter',
 })
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+})
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-fraunces',
+})
+
+const SITE_URL = 'https://truthixify.vercel.app'
+
 export const metadata: Metadata = {
-  metadataBase: new URL(siteMetadata.siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: siteMetadata.title,
-    template: `%s | ${siteMetadata.title}`,
+    default: 'truthxify',
+    template: '%s — truthxify',
   },
-  description: siteMetadata.description,
+  description:
+    'Articles, series, and a daily journal by truthxify — on AI, cryptography, distributed systems, and whatever else has my attention.',
   openGraph: {
-    title: siteMetadata.title,
-    description: siteMetadata.description,
+    title: 'truthxify',
+    description:
+      'Articles, series, and a daily journal by truthxify — on AI, cryptography, distributed systems, and whatever else has my attention.',
     url: './',
-    siteName: siteMetadata.title,
-    images: [siteMetadata.socialBanner],
+    siteName: 'truthxify',
+    images: ['/og-image.jpg'],
     locale: 'en_US',
     type: 'website',
   },
   alternates: {
     canonical: './',
     types: {
-      'application/rss+xml': `${siteMetadata.siteUrl}/feed.xml`,
+      'application/rss+xml': `${SITE_URL}/rss.xml`,
     },
   },
   robots: {
@@ -51,57 +62,31 @@ export const metadata: Metadata = {
     },
   },
   twitter: {
-    title: siteMetadata.title,
+    title: 'truthxify',
     card: 'summary_large_image',
-    images: [siteMetadata.socialBanner],
+    images: ['/og-image.jpg'],
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const basePath = process.env.BASE_PATH || ''
-
   return (
     <html
-      lang={siteMetadata.language}
-      className={`${space_grotesk.variable} scroll-smooth`}
+      lang="en"
+      className={`${inter.variable} ${jetbrainsMono.variable} ${fraunces.variable} scroll-smooth`}
       suppressHydrationWarning
     >
-      <link
-        rel="apple-touch-icon"
-        sizes="76x76"
-        href={`${basePath}/static/favicons/apple-touch-icon.png`}
-      />
-      <link
-        rel="icon"
-        type="image/png"
-        sizes="32x32"
-        href={`${basePath}/static/favicons/favicon-32x32.png`}
-      />
-      <link
-        rel="icon"
-        type="image/png"
-        sizes="16x16"
-        href={`${basePath}/static/favicons/favicon-16x16.png`}
-      />
-      <link rel="manifest" href={`${basePath}/static/favicons/site.webmanifest`} />
-      <link
-        rel="mask-icon"
-        href={`${basePath}/static/favicons/safari-pinned-tab.svg`}
-        color="#5bbad5"
-      />
-      <meta name="msapplication-TileColor" content="#000000" />
-      <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
-      <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
-      <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
-      <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
+      <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/apple-touch-icon.png" />
+      <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/favicon-32x32.png" />
+      <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/favicon-16x16.png" />
+      <link rel="manifest" href="/static/favicons/site.webmanifest" />
+      <link rel="alternate" type="application/rss+xml" href="/rss.xml" />
+      <body className="bg-background text-foreground flex min-h-screen flex-col antialiased">
         <ThemeProviders>
-          <SectionContainer>
-            <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
-              <Header />
-              <main className="mb-auto">{children}</main>
-            </SearchProvider>
-            <Footer />
-          </SectionContainer>
+          <HeaderWrapper />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <SiteFooter />
         </ThemeProviders>
       </body>
     </html>
