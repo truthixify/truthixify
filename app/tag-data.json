@@ -5,9 +5,14 @@
   "cairo": 2,
   "teaching": 1,
   "tutorial": 1,
-  "ink": 1,
-  "polkadot": 1,
+  "ink": 2,
+  "polkadot": 2,
   "smart-contract": 1,
+  "smart-contracts": 1,
+  "web3": 1,
+  "blockchain": 1,
+  "evm": 1,
+  "risc-v": 1,
   "cryptography": 1,
   "zk": 1
 }

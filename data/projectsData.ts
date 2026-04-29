@@ -1,29 +1,38 @@
-interface Project {
-  title: string
-  description: string
-  href?: string
-  imgSrc?: string
-}
+import type { Project } from '@/lib/types'
 
 const projectsData: Project[] = [
   {
-    title: 'Sukura',
-    description: `Sukura is a zero-knowledge mixer on Solana that lets you send and receive SOL privately. Shield your on-chain activity and preserve transaction confidentiality with fast finality.`,
-    imgSrc: '/static/images/SukuraLogo.svg',
-    href: 'https://sukura.vercel.app',
+    slug: 'sukura',
+    name: 'Sukura',
+    tagline:
+      'A zero-knowledge mixer on Solana — send and receive SOL privately, with fast finality.',
+    href: 'https://sukura.vercel.app/',
+    tags: ['zk', 'solana', 'privacy'],
   },
   {
-    title: 'ZK Word Mastermind',
-    description: 'The classic code-breaking game, reimagined for Web3 — powered by Zero-Knowledge Proofs built with for provable fairness. No trust, just truth.',
-    imgSrc: '/static/images/mastermind.png',
-    href: 'https://word-mastermind.vercel.app/'
+    slug: 'word-mastermind',
+    name: 'ZK Word Mastermind',
+    tagline:
+      'Classic code-breaking, reimagined for Web3 — provable fairness via zero-knowledge proofs.',
+    href: 'https://word-mastermind.vercel.app/',
+    tags: ['zk', 'game', 'web3'],
   },
   {
-    title: 'Obscura',
-    description: 'Obscura is a privacy-focused shielded pool for Starknet, enabling private deposits, transfers, and withdrawals using zero-knowledge proofs and a UTXO-based model.',
-    imgSrc: '/static/images/obscura.png',
-    href: 'https://obscura-app.vercel.app/'
-  }
+    slug: 'obscura',
+    name: 'Obscura',
+    tagline:
+      'A privacy-focused shielded pool for Starknet — private deposits, transfers, and withdrawals using ZK + UTXOs.',
+    href: 'https://obscura-app.vercel.app/',
+    tags: ['zk', 'starknet', 'privacy'],
+  },
+  {
+    slug: 'inkfundme',
+    name: 'InkFundMe',
+    tagline: 'Crowdfunding dApp on Polkadot with refunds, built with ink! + PAPI / ReactiveDOT.',
+    href: 'https://inkfundme-tutorial.vercel.app/',
+    repo: 'https://github.com/truthixify/inkfundme-tutorial',
+    tags: ['polkadot', 'ink', 'react'],
+  },
 ]
 
 export default projectsData
