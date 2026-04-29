@@ -75,10 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${jetbrainsMono.variable} ${fraunces.variable} scroll-smooth`}
       suppressHydrationWarning
     >
-      <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/apple-touch-icon.png" />
-      <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/favicon-32x32.png" />
-      <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/favicon-16x16.png" />
-      <link rel="manifest" href="/static/favicons/site.webmanifest" />
+      <link rel="icon" type="image/png" href="/favicon.png" />
       <link rel="alternate" type="application/rss+xml" href="/rss.xml" />
       <body className="bg-background text-foreground flex min-h-screen flex-col antialiased">
         <ThemeProviders>
