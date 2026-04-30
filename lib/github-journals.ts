@@ -23,7 +23,15 @@ const isoFromName = (name: string): string | null => {
 
 const stripBullet = (line: string) => line.replace(/^\s*-\s?/, '').trimEnd()
 
+const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`
+
 const cleanWikilinks = (s: string) => s.replace(/\[\[(.+?)\]\]/g, '$1').trim()
+
+const resolveAssetPaths = (s: string) =>
+  s.replace(
+    /(!?)\[([^\]]*)\]\((\.\.\/)?(assets\/[^)]+)\)/g,
+    (_match, bang, text, _prefix, path) => `${bang}[${text}](${RAW_BASE}/${path})`
+  )
 
 const phaseAlias = (raw: string): string => {
   const cleaned = cleanWikilinks(raw).trim()
@@ -67,7 +75,7 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
     }
 
     if (currentSection) {
-      const text = cleanWikilinks(line)
+      const text = resolveAssetPaths(cleanWikilinks(line))
       if (!text || text === '---') continue
       sections[currentSection]!.push(text)
     }

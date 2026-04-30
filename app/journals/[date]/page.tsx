@@ -4,6 +4,7 @@ import { fetchGithubJournals } from '@/lib/github-journals'
 import { fmtDateLong } from '@/lib/date'
 import type { JournalSection } from '@/lib/types'
 import { Metadata } from 'next'
+import { JournalText } from '@/components/journal-text'
 
 const sectionOrder: JournalSection[] = [
   'What I Did',
@@ -82,7 +83,7 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
                 {items.map((item, i) => (
                   <li key={i} className="relative pl-5">
                     <span className="bg-accent absolute top-[0.7em] left-0 h-px w-2" aria-hidden />
-                    {item}
+                    <JournalText text={item} />
                   </li>
                 ))}
               </ul>
