@@ -45,6 +45,7 @@ yarn-error.log*
 
 # Contentlayer
 .contentlayer
+app/tag-data.json
 
 # Others
 my-digital-garden
