@@ -1,0 +1,72 @@
+---
+title: 'Learn CKB in 45 Minutes: A Hands-On Guide from Zero to Deploying Your First Script'
+date: '2026-04-30'
+tags: ['ckb', 'nervos', 'blockchain', 'rust', 'tutorial']
+draft: false
+summary: 'A single resource that takes you from zero CKB knowledge to writing, testing, and deploying a real lock script in Rust. 13 chapters, 40 questions, one working project.'
+series: 'ckb'
+part: 1
+---
+
+# Learn CKB in 45 Minutes
+
+I've been diving deep into CKB lately and found that while the documentation is solid, there isn't a single resource that takes a developer from zero to writing and deploying a script in one sitting. So I built one.
+
+## What is this?
+
+**Learn CKB in 45 Minutes** is a hands-on guide that walks developers through every core CKB concept, ending with building, testing, and deploying a real lock script in Rust.
+
+It's structured as 13 progressive chapters. Each one builds on the last, with questions at the end to test your understanding (40 questions total, with hidden answers).
+
+## What's covered?
+
+The guide starts from the absolute basics and moves to hands-on scripting:
+
+- **Cells & Scripts**: what they are, how they work, live vs dead cells
+- **Transaction Structure**: inputs, outputs, `cell_deps`, and the validation flow
+- **Script Identification**: `code_hash`, `hash_type` (data vs type), `args`, and upgradeability
+- **NC-Max Consensus**: the propose/commit model and why CKB can have faster blocks than Bitcoin
+- **Economic Model**: 1 CKByte = 1 byte, secondary issuance, Nervos DAO as an inflation shield
+- **User Defined Tokens**: how UDTs work vs ERC-20, minting, transfer mechanics
+- **CKB-VM**: RISC-V execution, syscalls, cycles, and the pure validation model
+- **Off-Chain Computation, On-Chain Verification**: the pattern that makes CKB efficient and re-entrancy-free
+- **`since` Field**: time locks (absolute/relative, block/epoch/timestamp)
+- **Dep Groups**: bundling cell dependencies
+- **Witnesses**: proof data, `WitnessArgs`, and how they interact with script groups
+- **Script Groups**: how CKB avoids redundant execution
+- **Your First Script**: scaffold, write, build, test, and deploy a lock script in Rust using the official `ckb-script-templates`
+
+## Who is it for?
+
+Developers who want to understand CKB fast. Some blockchain background helps but isn't required since we start from scratch. If you've worked with Bitcoin's UTXO model or Ethereum smart contracts, you'll pick things up even faster.
+
+## The hands-on part
+
+The guide doesn't just explain concepts. You actually build something. The included `first-script` project contains a working password-lock script with:
+
+- Full Rust source code with line-by-line explanations
+- Two passing tests (correct password + wrong password rejection)
+- Build and deploy instructions using `ckb-script-templates` and `offckb`
+- Coding challenges you can fork and solve yourself
+
+## Sample question
+
+From the Script Identification chapter:
+
+> **If you're building a high-stakes vault contract where users need to be 100% certain the rules can never change, would you use `hash_type`: `"data"` or `"type"`? Why?**
+
+Each question has a hidden hint and answer. Click to reveal when you're ready.
+
+## Check it out
+
+The full guide is on GitHub: [learn-ckb-in-45-minutes](https://github.com/truthixify/learn-ckb-in-45-minutes)
+
+Feedback, corrections, and PRs are welcome. If you find it useful, give it a star so other devs can find it too.
+
+## What's next?
+
+I'm considering adding chapters on Molecule serialization, common script patterns (multi-sig, atomic swaps), and a full testnet deployment walkthrough. If there's something you'd want covered, let me know.
+
+---
+
+*This post was originally published on the [Nervos Talk forum](https://talk.nervos.org/t/learn-ckb-in-45-minutes-a-developers-fast-track-guide/10156).*

@@ -26,6 +26,14 @@ export const series: Series[] = [
     articleSlugs: ['unlocking-zk'],
   },
   {
+    slug: 'ckb',
+    title: 'Building on CKB',
+    summary:
+      'Guides and tutorials on building with Nervos CKB, from first principles to deployed scripts.',
+    status: 'in-progress',
+    articleSlugs: ['learn-ckb-in-45-minutes'],
+  },
+  {
     slug: 'ml-from-zero',
     title: 'ML From Zero',
     summary:
