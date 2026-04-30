@@ -297,6 +297,9 @@ export const SearchPalette = ({
               <CommandItem value="page-index" onSelect={() => go('/')}>
                 Index
               </CommandItem>
+              <CommandItem value="page-now" onSelect={() => go('/now')}>
+                Now
+              </CommandItem>
               <CommandItem value="page-articles" onSelect={() => go('/articles')}>
                 Articles
               </CommandItem>

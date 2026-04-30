@@ -12,6 +12,7 @@ import type { Journal, Project } from '@/lib/types'
 
 const nav = [
   { href: '/', label: 'Index', exact: true },
+  { href: '/now', label: 'Now' },
   { href: '/series', label: 'Series' },
   { href: '/articles', label: 'Articles' },
   { href: '/journals', label: 'Journals' },
