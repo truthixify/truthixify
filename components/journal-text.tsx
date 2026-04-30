@@ -15,8 +15,8 @@ export function JournalText({ text }: { text: string }) {
     }
 
     const [, bang, label, url] = match
-    if (bang === '!') {
-      // Image
+    const isImage = /\.(jpe?g|png|gif|webp|svg|avif)$/i.test(url)
+    if (bang === '!' && isImage) {
       parts.push(
         // eslint-disable-next-line @next/next/no-img-element
         <img

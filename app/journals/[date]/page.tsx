@@ -13,6 +13,7 @@ const sectionOrder: JournalSection[] = [
   'Concepts That Need More Time',
   'Tomorrow',
   'Wins',
+  'Notes',
 ]
 
 export async function generateStaticParams() {

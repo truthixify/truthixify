@@ -11,6 +11,7 @@ const KNOWN_SECTIONS: JournalSection[] = [
   'Concepts That Need More Time',
   'Tomorrow',
   'Wins',
+  'Notes',
 ]
 
 type GhFile = { name: string; type: 'file' | 'dir'; download_url: string | null }

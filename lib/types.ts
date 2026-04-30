@@ -15,6 +15,7 @@ export type JournalSection =
   | 'Concepts That Need More Time'
   | 'Tomorrow'
   | 'Wins'
+  | 'Notes'
 
 export type Journal = {
   date: string
