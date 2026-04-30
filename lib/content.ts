@@ -49,4 +49,14 @@ export function getSeriesArticles(seriesSlug: string): ArticleItem[] {
   return s.articleSlugs.map((slug) => getArticle(slug)).filter(Boolean) as ArticleItem[]
 }
 
+export function getSortedSeries() {
+  return [...series].sort((a, b) => {
+    const aArticles = getSeriesArticles(a.slug)
+    const bArticles = getSeriesArticles(b.slug)
+    const aLatest = aArticles[0]?.date ?? ''
+    const bLatest = bArticles[0]?.date ?? ''
+    return bLatest.localeCompare(aLatest)
+  })
+}
+
 export { series, getSeries, getSeriesTitle }

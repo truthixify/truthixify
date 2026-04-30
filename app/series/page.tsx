@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { series, getSeriesArticles } from '@/lib/content'
+import { getSortedSeries, getSeriesArticles } from '@/lib/content'
 import { StatusPill } from '@/components/status-pill'
 import { Metadata } from 'next'
 
@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 }
 
 export default function SeriesPage() {
+  const allSeries = getSortedSeries()
   return (
     <div className="mx-auto max-w-5xl px-6 py-16">
       <header className="max-w-2xl">
@@ -24,7 +25,7 @@ export default function SeriesPage() {
       </header>
 
       <div className="mt-14 space-y-12">
-        {series.map((s) => {
+        {allSeries.map((s) => {
           const parts = getSeriesArticles(s.slug)
           return (
             <section key={s.slug} className="border-border border-t pt-8">

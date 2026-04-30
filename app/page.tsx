@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
-import { getArticles, series, getSeriesTitle } from '@/lib/content'
+import { getArticles, getSortedSeries, getSeriesTitle } from '@/lib/content'
 import { StatusPill } from '@/components/status-pill'
 import { fmtDate } from '@/lib/date'
 import { fetchGithubJournals } from '@/lib/github-journals'
@@ -24,7 +24,9 @@ function SectionHeader({ title, link }: { title: string; link: { href: string; l
 
 export default async function HomePage() {
   const allArticles = getArticles()
-  const featured = series.filter((s) => s.status !== 'planned').slice(0, 2)
+  const featured = getSortedSeries()
+    .filter((s) => s.status !== 'planned')
+    .slice(0, 2)
   const lead = allArticles[0]
   const rest = allArticles.slice(1, 5)
 
