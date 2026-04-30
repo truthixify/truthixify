@@ -20,9 +20,8 @@ public/sitemap.xml
 
 # production
 /build
-*.xml
 
-# rss feed
+# old rss/sitemap (static files, not the Next.js route handlers)
 /public/feed.xml
 
 # search
