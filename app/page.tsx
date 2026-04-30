@@ -95,7 +95,7 @@ export default async function HomePage() {
             href={`/articles/${lead.slug}`}
             className="group border-border mt-6 grid gap-6 border-b pb-10 md:grid-cols-[1.1fr_1fr] md:gap-10"
           >
-            {lead.cover ? (
+            {lead.cover && (
               <div className="bg-muted border-border relative aspect-[16/10] overflow-hidden rounded-md border">
                 <Image
                   src={lead.cover}
@@ -104,8 +104,6 @@ export default async function HomePage() {
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                 />
               </div>
-            ) : (
-              <div className="from-accent/20 to-muted border-border aspect-[16/10] rounded-md border bg-gradient-to-br" />
             )}
             <div className="flex flex-col justify-center">
               <p className="text-muted-foreground font-mono text-xs tracking-wider uppercase">
