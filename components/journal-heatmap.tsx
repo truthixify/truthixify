@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import type { Journal } from '@/lib/types'
 
@@ -35,6 +35,13 @@ export const JournalHeatmap = ({ journals }: { journals: Journal[] }) => {
     }
   }, [journals])
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
+    }
+  }, [weeks])
+
   return (
     <div className="border-border bg-card rounded-md border p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-4">
@@ -46,7 +53,7 @@ export const JournalHeatmap = ({ journals }: { journals: Journal[] }) => {
           {lastDate && ` · last ${lastDate}`}
         </p>
       </div>
-      <div className="mt-4 overflow-x-auto pb-1">
+      <div ref={scrollRef} className="mt-4 overflow-x-auto pb-1">
         <div
           className="grid min-w-full gap-1"
           style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(10px, 1fr))` }}
