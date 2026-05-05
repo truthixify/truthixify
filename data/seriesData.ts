@@ -6,7 +6,7 @@ export const series: Series[] = [
     title: 'Polkadot From Scratch',
     summary:
       'A working tour through Polkadot 2.0 — from the smart contract layer to building real dApps with ink! and PAPI/ReactiveDOT.',
-    status: 'in-progress',
+    status: 'completed',
     articleSlugs: ['polkadot-hub', 'inkfundme-tutorial'],
   },
   {
