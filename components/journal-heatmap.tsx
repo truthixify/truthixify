@@ -16,7 +16,7 @@ export const JournalHeatmap = ({ journals }: { journals: Journal[] }) => {
     for (let i = 0; i < totalDays; i++) {
       const d = new Date(start)
       d.setDate(start.getDate() + i)
-      const iso = d.toISOString().slice(0, 10)
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       days.push({ date: iso, has: set.has(iso) })
     }
     const startDay = new Date(days[0].date + 'T00:00:00').getDay()
