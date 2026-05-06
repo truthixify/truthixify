@@ -29,9 +29,7 @@ export default function AboutPage() {
         <h2>Currently</h2>
         <ul>
           <li>Going deeper on AI — fundamentals, applied work, and everything in between</li>
-          <li>
-            Writing the <em>Polkadot From Scratch</em> series
-          </li>
+          <li>Building on CKB (Nervos) and writing about it</li>
           <li>Exploring the intersection of ZK and AI</li>
         </ul>
         <h2>Elsewhere</h2>
