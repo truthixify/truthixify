@@ -234,3 +234,136 @@
   display: inline-block;
   vertical-align: middle;
 }
+
+/* Prism syntax highlighting — editorial palette */
+:root {
+  --prism-bg: hsl(var(--muted) / 0.6);
+  --prism-comment: hsl(222 12% 50%);
+  --prism-keyword: hsl(232 84% 52%);
+  --prism-string: hsl(152 60% 38%);
+  --prism-number: hsl(32 95% 48%);
+  --prism-function: hsl(280 70% 50%);
+  --prism-class: hsl(15 80% 50%);
+  --prism-operator: hsl(222 25% 30%);
+  --prism-punctuation: hsl(222 25% 30%);
+  --prism-builtin: hsl(280 70% 50%);
+  --prism-variable: hsl(0 60% 50%);
+}
+.dark {
+  --prism-bg: hsl(var(--muted) / 0.6);
+  --prism-comment: hsl(40 10% 55%);
+  --prism-keyword: hsl(232 90% 70%);
+  --prism-string: hsl(152 55% 60%);
+  --prism-number: hsl(32 90% 65%);
+  --prism-function: hsl(280 80% 75%);
+  --prism-class: hsl(15 80% 65%);
+  --prism-operator: hsl(40 25% 80%);
+  --prism-punctuation: hsl(40 25% 80%);
+  --prism-builtin: hsl(280 80% 75%);
+  --prism-variable: hsl(0 70% 70%);
+}
+
+pre[class*='language-'],
+code[class*='language-'] {
+  color: hsl(var(--foreground));
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  background: var(--prism-bg);
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--prism-comment);
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--prism-punctuation);
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: var(--prism-number);
+}
+
+.token.number {
+  color: var(--prism-number);
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: var(--prism-string);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: var(--prism-operator);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: var(--prism-keyword);
+}
+
+.token.function,
+.token.class-name {
+  color: var(--prism-function);
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: var(--prism-variable);
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+/* Line numbers from rehype-prism-plus */
+.code-line {
+  display: block;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.code-line.inserted {
+  background-color: hsl(152 60% 38% / 0.15);
+}
+.code-line.deleted {
+  background-color: hsl(0 60% 50% / 0.15);
+}
+.highlight-line {
+  background-color: hsl(var(--accent) / 0.1);
+  border-left: 2px solid hsl(var(--accent));
+}
+.line-number::before {
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 0.5rem;
+  text-align: right;
+  color: hsl(var(--muted-foreground));
+  content: attr(line);
+}
