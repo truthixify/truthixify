@@ -45,11 +45,31 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
   let goal = ''
   const sections: Partial<Record<JournalSection, string[]>> = {}
   let currentSection: JournalSection | null = null
+  let mathBuffer: string[] | null = null
 
   for (const rawLine of lines) {
+    // Multi-line math block: accumulate raw lines until closing $$
+    if (mathBuffer !== null) {
+      mathBuffer.push(rawLine)
+      if (rawLine.includes('$$')) {
+        if (currentSection) {
+          sections[currentSection]!.push(mathBuffer.join('\n'))
+        }
+        mathBuffer = null
+      }
+      continue
+    }
+
     const line = stripBullet(rawLine)
     if (!line) continue
     if (/^---+$/.test(line)) continue
+
+    // Detect start of multi-line math block ($$ on its own or starting a line without closing)
+    const dollarCount = (line.match(/\$\$/g) || []).length
+    if (dollarCount === 1) {
+      mathBuffer = [line]
+      continue
+    }
 
     const h = line.match(/^#{1,6}\s+(.+?)\s*$/)
     if (h) {

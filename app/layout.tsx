@@ -1,4 +1,5 @@
 import 'css/tailwind.css'
+import 'katex/dist/katex.min.css'
 
 import { Inter, JetBrains_Mono, Fraunces } from 'next/font/google'
 import { ThemeProviders } from './theme-providers'
