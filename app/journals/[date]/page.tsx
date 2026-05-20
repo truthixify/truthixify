@@ -81,12 +81,20 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
                 {key}
               </h2>
               <ul className="prose-reading mt-4 space-y-2.5">
-                {items.map((item, i) => (
-                  <li key={i} className="relative pl-5">
-                    <span className="bg-accent absolute top-[0.7em] left-0 h-px w-2" aria-hidden />
-                    <JournalText text={item} />
-                  </li>
-                ))}
+                {items.map((item, i) => {
+                  const isBlock = /^\s*```/.test(item) || /^\$\$[\s\S]*\$\$\s*$/.test(item.trim())
+                  return (
+                    <li key={i} className={isBlock ? 'list-none' : 'relative pl-5'}>
+                      {!isBlock && (
+                        <span
+                          className="bg-accent absolute top-[0.7em] left-0 h-px w-2"
+                          aria-hidden
+                        />
+                      )}
+                      <JournalText text={item} />
+                    </li>
+                  )
+                })}
               </ul>
             </section>
           )

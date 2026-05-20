@@ -1,10 +1,38 @@
 import React from 'react'
 import katex from 'katex'
+import Prism from 'prismjs'
+import 'prismjs/components/prism-python'
+import 'prismjs/components/prism-rust'
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-json'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-jsx'
+import 'prismjs/components/prism-tsx'
+import 'prismjs/components/prism-yaml'
+import 'prismjs/components/prism-toml'
+import 'prismjs/components/prism-markdown'
 
-// Renders a journal text string with: $$...$$ block math, $...$ inline math,
-// ![alt](url) images, [text](url) links, and plain text.
+// Renders a journal text string with code blocks, math, images, links, and plain text.
 export function JournalText({ text }: { text: string }) {
-  // First, split on block math ($$...$$, possibly multi-line)
+  // Code fence: ```lang\n...\n```
+  if (/^\s*```/.test(text)) {
+    const match = text.match(/^\s*```(\w*)\s*\n([\s\S]*?)\n\s*```\s*$/)
+    if (match) {
+      const lang = match[1] || 'plaintext'
+      const code = match[2]
+      const grammar = Prism.languages[lang] || Prism.languages.plaintext
+      const html = grammar ? Prism.highlight(code, grammar, lang) : escapeHtml(code)
+      return (
+        <pre
+          className={`language-${lang} border-border bg-muted/60 my-3 overflow-x-auto rounded-md border p-4 text-sm`}
+        >
+          <code className={`language-${lang}`} dangerouslySetInnerHTML={{ __html: html }} />
+        </pre>
+      )
+    }
+  }
+
+  // Block math: $$...$$
   const blockMathRegex = /\$\$([\s\S]+?)\$\$/g
   const parts: React.ReactNode[] = []
   let lastIndex = 0
@@ -42,10 +70,19 @@ export function JournalText({ text }: { text: string }) {
   return <>{parts}</>
 }
 
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function renderInline(text: string, baseKey: number): React.ReactNode[] {
   const parts: React.ReactNode[] = []
-  // Match inline math, images, and links — try each in order
-  const regex = /(\$[^$\n]+?\$)|(!?\[[^\]]*\]\([^)]+\))/g
+  // Match inline code, inline math, images, and links — in order
+  const regex = /(`[^`\n]+`)|(\$[^$\n]+?\$)|(!?\[[^\]]*\]\([^)]+\))/g
   let lastIndex = 0
   let match: RegExpExecArray | null
   let key = baseKey
@@ -56,7 +93,17 @@ function renderInline(text: string, baseKey: number): React.ReactNode[] {
     }
 
     const token = match[0]
-    if (token.startsWith('$') && token.endsWith('$')) {
+    if (token.startsWith('`') && token.endsWith('`')) {
+      // Inline code
+      parts.push(
+        <code
+          key={`code-${key++}`}
+          className="bg-muted rounded px-1.5 py-0.5 font-mono text-[0.9em]"
+        >
+          {token.slice(1, -1)}
+        </code>
+      )
+    } else if (token.startsWith('$') && token.endsWith('$')) {
       // Inline math
       try {
         const html = katex.renderToString(token.slice(1, -1), {

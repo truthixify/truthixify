@@ -46,8 +46,21 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
   const sections: Partial<Record<JournalSection, string[]>> = {}
   let currentSection: JournalSection | null = null
   let mathBuffer: string[] | null = null
+  let codeBuffer: string[] | null = null
 
   for (const rawLine of lines) {
+    // Multi-line code fence: accumulate raw lines until closing ```
+    if (codeBuffer !== null) {
+      codeBuffer.push(rawLine)
+      if (/^\s*```\s*$/.test(rawLine)) {
+        if (currentSection) {
+          sections[currentSection]!.push(codeBuffer.join('\n'))
+        }
+        codeBuffer = null
+      }
+      continue
+    }
+
     // Multi-line math block: accumulate raw lines until closing $$
     if (mathBuffer !== null) {
       mathBuffer.push(rawLine)
@@ -63,6 +76,12 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
     const line = stripBullet(rawLine)
     if (!line) continue
     if (/^---+$/.test(line)) continue
+
+    // Detect start of code fence (```lang or ```)
+    if (/^\s*```/.test(line)) {
+      codeBuffer = [line]
+      continue
+    }
 
     // Detect start of multi-line math block ($$ on its own or starting a line without closing)
     const dollarCount = (line.match(/\$\$/g) || []).length
