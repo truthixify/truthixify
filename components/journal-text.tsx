@@ -3,6 +3,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
+import { visit } from 'unist-util-visit'
+import type { Root, Text } from 'mdast'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-python'
 import 'prismjs/components/prism-rust'
@@ -14,6 +16,15 @@ import 'prismjs/components/prism-tsx'
 import 'prismjs/components/prism-yaml'
 import 'prismjs/components/prism-toml'
 import 'prismjs/components/prism-markdown'
+
+// Replaces ASCII arrows with Unicode arrows in text nodes (skips code/math)
+function remarkArrows() {
+  return (tree: Root) => {
+    visit(tree, 'text', (node: Text) => {
+      node.value = node.value.replace(/->/g, '→').replace(/<-/g, '←').replace(/=>/g, '⇒')
+    })
+  }
+}
 
 function highlightCode(code: string, lang: string): string {
   const grammar = Prism.languages[lang]
@@ -37,7 +48,7 @@ function escapeHtml(s: string) {
 export function JournalText({ text }: { text: string }) {
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkMath]}
+      remarkPlugins={[remarkGfm, remarkMath, remarkArrows]}
       rehypePlugins={[rehypeKatex]}
       components={{
         // Override code to apply Prism highlighting
