@@ -24,6 +24,15 @@ const isoFromName = (name: string): string | null => {
 
 const stripBullet = (line: string) => line.replace(/^\s*-\s?/, '').trimEnd()
 
+// Parses a raw line into its indent depth and bullet content.
+// Tabs are treated as 2 spaces. Returns null if the line isn't a bullet.
+const parseBulletLine = (rawLine: string): { indent: number; content: string } | null => {
+  const expanded = rawLine.replace(/\t/g, '  ')
+  const m = expanded.match(/^(\s*)-\s?(.*)$/)
+  if (!m) return null
+  return { indent: m[1].length, content: m[2].trimEnd() }
+}
+
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`
 
 const cleanWikilinks = (s: string) => s.replace(/\[\[(.+?)\]\]/g, '$1').trim()
@@ -47,15 +56,29 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
   let currentSection: JournalSection | null = null
   let mathBuffer: string[] | null = null
   let codeBuffer: string[] | null = null
+  // Track current top-level item (and its nested content) within a section
+  let itemBuffer: string[] = []
+  let baseIndent: number | null = null
+
+  const flushItem = () => {
+    if (currentSection && itemBuffer.length > 0) {
+      sections[currentSection]!.push(itemBuffer.join('\n'))
+    }
+    itemBuffer = []
+  }
+
+  const pushToItem = (s: string) => {
+    if (!currentSection) return
+    itemBuffer.push(s)
+  }
 
   for (const rawLine of lines) {
     // Multi-line code fence: accumulate raw lines until closing ```
     if (codeBuffer !== null) {
       codeBuffer.push(rawLine)
       if (/^\s*```\s*$/.test(rawLine)) {
-        if (currentSection) {
-          sections[currentSection]!.push(codeBuffer.join('\n'))
-        }
+        flushItem()
+        if (currentSection) sections[currentSection]!.push(codeBuffer.join('\n'))
         codeBuffer = null
       }
       continue
@@ -65,61 +88,97 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
     if (mathBuffer !== null) {
       mathBuffer.push(rawLine)
       if (rawLine.includes('$$')) {
-        if (currentSection) {
-          sections[currentSection]!.push(mathBuffer.join('\n'))
-        }
+        flushItem()
+        if (currentSection) sections[currentSection]!.push(mathBuffer.join('\n'))
         mathBuffer = null
       }
       continue
     }
 
-    const line = stripBullet(rawLine)
-    if (!line) continue
-    if (/^---+$/.test(line)) continue
+    const stripped = stripBullet(rawLine)
+
+    // Empty line: flush the current item (separator between bullets)
+    if (!stripped) {
+      flushItem()
+      continue
+    }
+
+    if (/^---+$/.test(stripped)) {
+      flushItem()
+      continue
+    }
 
     // Detect start of code fence (```lang or ```)
-    if (/^\s*```/.test(line)) {
-      codeBuffer = [line]
+    if (/^\s*```/.test(stripped)) {
+      flushItem()
+      codeBuffer = [stripped]
       continue
     }
 
     // Detect start of multi-line math block ($$ on its own or starting a line without closing)
-    const dollarCount = (line.match(/\$\$/g) || []).length
+    const dollarCount = (stripped.match(/\$\$/g) || []).length
     if (dollarCount === 1) {
-      mathBuffer = [line]
+      flushItem()
+      mathBuffer = [stripped]
       continue
     }
 
-    const h = line.match(/^#{1,6}\s+(.+?)\s*$/)
+    // Headings reset the section
+    const h = stripped.match(/^#{1,6}\s+(.+?)\s*$/)
     if (h) {
+      flushItem()
       const heading = h[1].trim()
       const matched = KNOWN_SECTIONS.find((s) => s.toLowerCase() === heading.toLowerCase())
       if (matched) {
         currentSection = matched
+        baseIndent = null
         sections[matched] ??= []
         continue
       }
       currentSection = null
+      baseIndent = null
       continue
     }
 
-    const phaseMatch = line.match(/^\*\*Phase:\*\*\s*(.+)$/i)
+    const phaseMatch = stripped.match(/^\*\*Phase:\*\*\s*(.+)$/i)
     if (phaseMatch) {
+      flushItem()
       phase = phaseAlias(phaseMatch[1])
       continue
     }
-    const goalMatch = line.match(/^\*\*Goal(?:\s+for\s+today)?:\*\*\s*(.+)$/i)
+    const goalMatch = stripped.match(/^\*\*Goal(?:\s+for\s+today)?:\*\*\s*(.+)$/i)
     if (goalMatch) {
+      flushItem()
       goal = cleanWikilinks(goalMatch[1])
       continue
     }
 
-    if (currentSection) {
-      const text = resolveAssetPaths(cleanWikilinks(line))
-      if (!text || text === '---') continue
-      sections[currentSection]!.push(text)
+    if (!currentSection) continue
+
+    // Determine if this line is a bullet, and at what indent
+    const bullet = parseBulletLine(rawLine)
+    if (bullet) {
+      if (baseIndent === null) baseIndent = bullet.indent
+
+      if (bullet.indent <= baseIndent) {
+        // New top-level item
+        flushItem()
+        const text = resolveAssetPaths(cleanWikilinks(bullet.content))
+        if (text && text !== '---') pushToItem(text)
+      } else {
+        // Nested item: preserve relative indentation as markdown sublist
+        const depth = Math.max(1, Math.floor((bullet.indent - baseIndent) / 2))
+        const indent = '  '.repeat(depth)
+        const text = resolveAssetPaths(cleanWikilinks(bullet.content))
+        if (text && text !== '---') pushToItem(`${indent}- ${text}`)
+      }
+    } else {
+      // Non-bullet line (e.g., continuation of an item) — append with indentation
+      const text = resolveAssetPaths(cleanWikilinks(stripped))
+      if (text && text !== '---') pushToItem(`  ${text}`)
     }
   }
+  flushItem()
 
   for (const key of Object.keys(sections) as JournalSection[]) {
     if (!sections[key] || sections[key]!.length === 0) delete sections[key]

@@ -80,11 +80,11 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
               <h2 className="text-muted-foreground border-border border-b pb-2 font-mono text-xs tracking-[0.18em] uppercase">
                 {key}
               </h2>
-              <ul className="prose-reading mt-4 space-y-2.5">
+              <div className="prose-reading mt-4 space-y-3">
                 {items.map((item, i) => {
                   const isBlock = /^\s*```/.test(item) || /^\$\$[\s\S]*\$\$\s*$/.test(item.trim())
                   return (
-                    <li key={i} className={isBlock ? 'list-none' : 'relative pl-5'}>
+                    <div key={i} className={isBlock ? '' : 'relative pl-5'}>
                       {!isBlock && (
                         <span
                           className="bg-accent absolute top-[0.7em] left-0 h-px w-2"
@@ -92,10 +92,10 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
                         />
                       )}
                       <JournalText text={item} />
-                    </li>
+                    </div>
                   )
                 })}
-              </ul>
+              </div>
             </section>
           )
         })}
