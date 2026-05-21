@@ -24,15 +24,6 @@ const isoFromName = (name: string): string | null => {
 
 const stripBullet = (line: string) => line.replace(/^\s*-\s?/, '').trimEnd()
 
-// Parses a raw line into its indent depth and bullet content.
-// Tabs are treated as 2 spaces. Returns null if the line isn't a bullet.
-const parseBulletLine = (rawLine: string): { indent: number; content: string } | null => {
-  const expanded = rawLine.replace(/\t/g, '  ')
-  const m = expanded.match(/^(\s*)-\s?(.*)$/)
-  if (!m) return null
-  return { indent: m[1].length, content: m[2].trimEnd() }
-}
-
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`
 
 const cleanWikilinks = (s: string) => s.replace(/\[\[(.+?)\]\]/g, '$1').trim()
@@ -54,97 +45,57 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
   let goal = ''
   const sections: Partial<Record<JournalSection, string[]>> = {}
   let currentSection: JournalSection | null = null
-  let mathBuffer: string[] | null = null
-  let codeBuffer: string[] | null = null
-  // Track current top-level item (and its nested content) within a section
-  let itemBuffer: string[] = []
+  // Track the current top-level Logseq bullet block (raw lines, indent preserved).
+  let blockLines: string[] = []
   let baseIndent: number | null = null
 
+  const detectBullet = (line: string): { indent: number; content: string } | null => {
+    const expanded = line.replace(/\t/g, '  ')
+    const m = expanded.match(/^(\s*)-\s?(.*)$/)
+    if (!m) return null
+    return { indent: m[1].length, content: m[2].trimEnd() }
+  }
+
+  // Convert the collected block lines (raw, with bullets/indent) into clean markdown.
+  // Strips the bullet prefix from the first line and the continuation indent from the rest,
+  // then applies wikilink + asset-path transforms.
   const flushItem = () => {
-    if (currentSection && itemBuffer.length > 0) {
-      sections[currentSection]!.push(itemBuffer.join('\n'))
+    if (!currentSection || blockLines.length === 0) {
+      blockLines = []
+      return
     }
-    itemBuffer = []
+    const indent = baseIndent ?? 0
+    const contIndent = indent + 2
+    const processed: string[] = []
+    for (let i = 0; i < blockLines.length; i++) {
+      const expanded = blockLines[i].replace(/\t/g, '  ')
+      let line: string
+      if (i === 0) {
+        // Strip the leading "<indent spaces>- " from the first line
+        line = expanded.replace(new RegExp(`^\\s{0,${indent}}-\\s?`), '')
+      } else {
+        // Strip up to contIndent leading spaces from continuation lines
+        line = expanded.replace(new RegExp(`^\\s{0,${contIndent}}`), '')
+      }
+      processed.push(line.trimEnd())
+    }
+    let md = processed.join('\n')
+    md = cleanWikilinks(md)
+    md = resolveAssetPaths(md)
+    // Normalize $$...$$ math blocks: ensure $$ markers are on their own lines
+    // so remark-math recognizes them as block (display) math, not inline.
+    md = md.replace(/\$\$([\s\S]+?)\$\$/g, (_match, inner: string) => {
+      return '\n\n$$\n' + inner.trim() + '\n$$\n\n'
+    })
+    md = md.replace(/\n{3,}/g, '\n\n').trim()
+    if (md) sections[currentSection]!.push(md)
+    blockLines = []
   }
-
-  const pushToItem = (s: string) => {
-    if (!currentSection) return
-    itemBuffer.push(s)
-  }
-
-  // Strip Logseq bullets from inside code/math blocks (preserves indentation).
-  const stripBlockBullet = (line: string) => line.replace(/^(\s*)-\s/, '$1')
 
   for (const rawLine of lines) {
-    // Multi-line code fence: accumulate cleaned lines until closing ```
-    if (codeBuffer !== null) {
-      const cleaned = stripBlockBullet(rawLine)
-      codeBuffer.push(cleaned)
-      if (/^\s*```\s*$/.test(cleaned)) {
-        flushItem()
-        if (currentSection) sections[currentSection]!.push(codeBuffer.join('\n'))
-        codeBuffer = null
-      }
-      continue
-    }
-
-    // Multi-line math block: accumulate cleaned lines until closing $$
-    if (mathBuffer !== null) {
-      const cleaned = stripBlockBullet(rawLine)
-      mathBuffer.push(cleaned)
-      if (cleaned.includes('$$')) {
-        flushItem()
-        if (currentSection) {
-          // Normalize so $$ markers are on their own lines for remark-math.
-          // Note: in replacement strings, $$ means a literal $, so use a callback.
-          let joined = mathBuffer.join('\n')
-          joined = joined.replace(/^\$\$/, () => '$$\n').replace(/\$\$$/, () => '\n$$')
-          sections[currentSection]!.push(joined)
-        }
-        mathBuffer = null
-      }
-      continue
-    }
-
     const stripped = stripBullet(rawLine)
 
-    // Empty line: flush the current item (separator between bullets)
-    if (!stripped) {
-      flushItem()
-      continue
-    }
-
-    if (/^---+$/.test(stripped)) {
-      flushItem()
-      continue
-    }
-
-    // Detect start of code fence (```lang or ```)
-    if (/^\s*```/.test(stripped)) {
-      flushItem()
-      codeBuffer = [stripped]
-      continue
-    }
-
-    // Detect math blocks. dollarCount === 2 means single-line $$...$$,
-    // dollarCount === 1 starts a multi-line block until next $$.
-    const dollarCount = (stripped.match(/\$\$/g) || []).length
-    if (dollarCount === 2 && /^\$\$.*\$\$$/.test(stripped)) {
-      flushItem()
-      // Reformat single-line $$...$$ to block form so remark-math treats it as block
-      const inner = stripped.replace(/^\$\$\s*/, '').replace(/\s*\$\$$/, '')
-      if (currentSection && inner) {
-        sections[currentSection]!.push('$$\n' + inner + '\n$$')
-      }
-      continue
-    }
-    if (dollarCount === 1) {
-      flushItem()
-      mathBuffer = [stripped]
-      continue
-    }
-
-    // Headings reset the section
+    // Headings reset the section (always flush)
     const h = stripped.match(/^#{1,6}\s+(.+?)\s*$/)
     if (h) {
       flushItem()
@@ -176,28 +127,42 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
 
     if (!currentSection) continue
 
-    // Determine if this line is a bullet, and at what indent
-    const bullet = parseBulletLine(rawLine)
-    if (bullet) {
-      if (baseIndent === null) baseIndent = bullet.indent
+    // Skip Logseq-specific metadata lines
+    if (/^\s*(collapsed|background-color|id)::/.test(rawLine)) continue
 
-      if (bullet.indent <= baseIndent) {
+    // Top-level `---` separator (at the section's base bullet indent, not continuation)
+    const expanded = rawLine.replace(/\t/g, '  ')
+    if (
+      /^---+$/.test(stripped) &&
+      (baseIndent === null ||
+        expanded.search(/\S/) === baseIndent ||
+        expanded.search(/\S/) === -1 ||
+        expanded.trim() === '---')
+    ) {
+      // Only treat as separator if it's at indent <= continuation
+      const ind = expanded.search(/\S/)
+      if (ind === -1 || baseIndent === null || ind <= (baseIndent ?? 0)) {
+        flushItem()
+        continue
+      }
+    }
+
+    const bullet = detectBullet(rawLine)
+    if (bullet) {
+      if (baseIndent === null || bullet.indent === baseIndent) {
         // New top-level item
         flushItem()
-        const text = resolveAssetPaths(cleanWikilinks(bullet.content))
-        if (text && text !== '---') pushToItem(text)
+        baseIndent = bullet.indent
+        blockLines.push(rawLine)
       } else {
-        // Nested item: preserve relative indentation as markdown sublist
-        const depth = Math.max(1, Math.floor((bullet.indent - baseIndent) / 2))
-        const indent = '  '.repeat(depth)
-        const text = resolveAssetPaths(cleanWikilinks(bullet.content))
-        if (text && text !== '---') pushToItem(`${indent}- ${text}`)
+        // Nested or deeper bullet — continuation of current block
+        blockLines.push(rawLine)
       }
-    } else {
-      // Non-bullet line (e.g., continuation of an item) — append with indentation
-      const text = resolveAssetPaths(cleanWikilinks(stripped))
-      if (text && text !== '---') pushToItem(`  ${text}`)
+      continue
     }
+
+    // Non-bullet line — append to current block (if any)
+    if (blockLines.length > 0) blockLines.push(rawLine)
   }
   flushItem()
 
