@@ -72,11 +72,15 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
     itemBuffer.push(s)
   }
 
+  // Strip Logseq bullets from inside code/math blocks (preserves indentation).
+  const stripBlockBullet = (line: string) => line.replace(/^(\s*)-\s/, '$1')
+
   for (const rawLine of lines) {
-    // Multi-line code fence: accumulate raw lines until closing ```
+    // Multi-line code fence: accumulate cleaned lines until closing ```
     if (codeBuffer !== null) {
-      codeBuffer.push(rawLine)
-      if (/^\s*```\s*$/.test(rawLine)) {
+      const cleaned = stripBlockBullet(rawLine)
+      codeBuffer.push(cleaned)
+      if (/^\s*```\s*$/.test(cleaned)) {
         flushItem()
         if (currentSection) sections[currentSection]!.push(codeBuffer.join('\n'))
         codeBuffer = null
@@ -84,12 +88,18 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
       continue
     }
 
-    // Multi-line math block: accumulate raw lines until closing $$
+    // Multi-line math block: accumulate cleaned lines until closing $$
     if (mathBuffer !== null) {
-      mathBuffer.push(rawLine)
-      if (rawLine.includes('$$')) {
+      const cleaned = stripBlockBullet(rawLine)
+      mathBuffer.push(cleaned)
+      if (cleaned.includes('$$')) {
         flushItem()
-        if (currentSection) sections[currentSection]!.push(mathBuffer.join('\n'))
+        if (currentSection) {
+          // Normalize so $$ markers are on their own lines for remark-math
+          let joined = mathBuffer.join('\n')
+          joined = joined.replace(/^\$\$/, '$$\n').replace(/\$\$$/, '\n$$')
+          sections[currentSection]!.push(joined)
+        }
         mathBuffer = null
       }
       continue
