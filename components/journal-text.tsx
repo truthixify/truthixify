@@ -86,10 +86,13 @@ export function JournalText({ text }: { text: string }) {
           return <img {...props} className="my-3 max-w-full rounded-md" loading="lazy" />
         },
         ul(props) {
-          return <ul className="my-2 list-disc space-y-1 pl-6">{props.children}</ul>
+          return <ul className="journal-list my-2 space-y-1 pl-5">{props.children}</ul>
         },
         ol(props) {
           return <ol className="my-2 list-decimal space-y-1 pl-6">{props.children}</ol>
+        },
+        li(props) {
+          return <li className="relative pl-4">{props.children}</li>
         },
         p(props) {
           return <p className="my-1">{props.children}</p>

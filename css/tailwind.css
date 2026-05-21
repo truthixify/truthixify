@@ -235,6 +235,29 @@
   vertical-align: middle;
 }
 
+/* Journal markdown list bullets — accent bar to match site design */
+.journal-list {
+  list-style: none;
+}
+.journal-list > li {
+  position: relative;
+}
+.journal-list > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 0.5rem;
+  height: 1px;
+  background-color: hsl(var(--accent));
+}
+
+/* Force KaTeX block math to center */
+.katex-display {
+  text-align: center !important;
+  margin: 1em 0 !important;
+}
+
 /* Prism syntax highlighting — editorial palette */
 :root {
   --prism-bg: hsl(var(--muted) / 0.6);
