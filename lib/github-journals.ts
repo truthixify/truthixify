@@ -95,9 +95,10 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
       if (cleaned.includes('$$')) {
         flushItem()
         if (currentSection) {
-          // Normalize so $$ markers are on their own lines for remark-math
+          // Normalize so $$ markers are on their own lines for remark-math.
+          // Note: in replacement strings, $$ means a literal $, so use a callback.
           let joined = mathBuffer.join('\n')
-          joined = joined.replace(/^\$\$/, '$$\n').replace(/\$\$$/, '\n$$')
+          joined = joined.replace(/^\$\$/, () => '$$\n').replace(/\$\$$/, () => '\n$$')
           sections[currentSection]!.push(joined)
         }
         mathBuffer = null
@@ -125,8 +126,18 @@ export const parseJournalMarkdown = (date: string, md: string): Journal | null =
       continue
     }
 
-    // Detect start of multi-line math block ($$ on its own or starting a line without closing)
+    // Detect math blocks. dollarCount === 2 means single-line $$...$$,
+    // dollarCount === 1 starts a multi-line block until next $$.
     const dollarCount = (stripped.match(/\$\$/g) || []).length
+    if (dollarCount === 2 && /^\$\$.*\$\$$/.test(stripped)) {
+      flushItem()
+      // Reformat single-line $$...$$ to block form so remark-math treats it as block
+      const inner = stripped.replace(/^\$\$\s*/, '').replace(/\s*\$\$$/, '')
+      if (currentSection && inner) {
+        sections[currentSection]!.push('$$\n' + inner + '\n$$')
+      }
+      continue
+    }
     if (dollarCount === 1) {
       flushItem()
       mathBuffer = [stripped]
