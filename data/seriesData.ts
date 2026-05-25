@@ -39,7 +39,7 @@ export const series: Series[] = [
     summary:
       'Documenting a ground-up rebuild of math, Python, and ML fundamentals — paired with the daily learning journal.',
     status: 'in-progress',
-    articleSlugs: ['decision-trees-from-scratch'],
+    articleSlugs: ['decision-trees-from-scratch', 'multilayer-neural-network-from-scratch'],
   },
 ]
 
