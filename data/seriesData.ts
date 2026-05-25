@@ -38,8 +38,8 @@ export const series: Series[] = [
     title: 'ML From Zero',
     summary:
       'Documenting a ground-up rebuild of math, Python, and ML fundamentals — paired with the daily learning journal.',
-    status: 'planned',
-    articleSlugs: [],
+    status: 'in-progress',
+    articleSlugs: ['decision_trees_from_scratch'],
   },
 ]
 
