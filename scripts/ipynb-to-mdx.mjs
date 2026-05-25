@@ -200,16 +200,10 @@ async function convertOne(ipynbPath) {
   console.log(`[ipynb-to-mdx] ${path.relative(ROOT, ipynbPath)} → data/blog/${basename}.mdx`)
 }
 
-async function main() {
-  if (!(await exists(NOTEBOOK_DIR))) {
-    console.log(`[ipynb-to-mdx] no data/blog/notebooks/ — skipping`)
-    return
-  }
+async function convertAll() {
+  if (!(await exists(NOTEBOOK_DIR))) return false
   const files = (await fs.readdir(NOTEBOOK_DIR)).filter((f) => f.endsWith('.ipynb'))
-  if (!files.length) {
-    console.log(`[ipynb-to-mdx] no notebooks found in data/blog/notebooks/`)
-    return
-  }
+  if (!files.length) return false
   for (const f of files) {
     try {
       await convertOne(path.join(NOTEBOOK_DIR, f))
@@ -218,6 +212,56 @@ async function main() {
       process.exitCode = 1
     }
   }
+  return true
+}
+
+async function watch() {
+  await fs.mkdir(NOTEBOOK_DIR, { recursive: true })
+  await convertAll()
+  console.log(`[ipynb-to-mdx] watching ${path.relative(ROOT, NOTEBOOK_DIR)}/ for changes…`)
+
+  const { default: chokidar } = await import('chokidar')
+  const watcher = chokidar.watch(NOTEBOOK_DIR, {
+    ignoreInitial: true,
+    depth: 0,
+    awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
+  })
+
+  let timer = null
+  let pending = new Set()
+  const queue = (file) => {
+    if (!file.endsWith('.ipynb') && !file.endsWith('.mdx')) return
+    pending.add(path.basename(file))
+    clearTimeout(timer)
+    timer = setTimeout(async () => {
+      const changed = [...pending]
+      pending = new Set()
+      console.log(`[ipynb-to-mdx] changed: ${changed.join(', ')} — regenerating`)
+      await convertAll()
+    }, 100)
+  }
+
+  watcher
+    .on('add', queue)
+    .on('change', queue)
+    .on('unlink', queue)
+    .on('error', (err) => console.error('[ipynb-to-mdx] watcher error:', err))
+    .on('ready', () => {
+      // ready fires after initial scan
+    })
+
+  // Keep alive
+  process.stdin.resume()
+}
+
+async function main() {
+  const isWatch = process.argv.includes('--watch')
+  if (isWatch) {
+    await watch()
+    return
+  }
+  const did = await convertAll()
+  if (!did) console.log(`[ipynb-to-mdx] no notebooks found in data/blog/notebooks/`)
 }
 
 main()

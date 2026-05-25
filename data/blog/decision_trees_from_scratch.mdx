@@ -17,7 +17,7 @@ In this tutorial, you'll build a decision tree classifier from the ground up usi
 **What we'll cover:**
 
 1. What decision trees are and how they make predictions
-2. Measuring how "mixed" a node is — entropy and Gini index
+2. Measuring how "mixed" a node is
 3. Splitting data on features
 4. Choosing the best split using information gain
 5. Building the tree recursively
@@ -40,7 +40,9 @@ Each question splits the data into smaller groups. The tree keeps splitting unti
 **The challenge:** how do we decide *which* question to ask at each node? That's what most of this tutorial is about.
 
 
-<NotebookCell language="python" code={`import numpy as np`} outputs={[]} />
+<NotebookCell language="python" code={`import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches`} outputs={[]} />
 
 
 ## Measuring impurity
@@ -49,13 +51,13 @@ To decide where to split, we need a way to measure how "mixed" the labels in a g
 
 We'll use two common impurity measures:
 
-**Entropy** — from information theory. Measures the unpredictability of the labels.
+**Entropy**: from information theory. Measures the unpredictability of the labels.
 
 $H(p) = -p \log_2(p) - (1-p) \log_2(1-p)$
 
 Where $p$ is the fraction of positive examples. Entropy is 0 when the group is pure and 1 when classes are exactly split 50/50.
 
-**Gini index** — measures the probability of misclassifying a randomly chosen example.
+**Gini index**: measures the probability of misclassifying a randomly chosen example.
 
 $G(p) = 1 - p^2 - (1-p)^2 = 2p(1-p)$
 
@@ -167,7 +169,7 @@ Where $w_\text{left}$ and $w_\text{right}$ are the fractions of examples going t
 The function below works with either impurity measure (entropy or Gini) by accepting it as a parameter.
 
 
-<NotebookCell language="python" code={`def compute_information_gain(X, Y, node_indices, feature_idx, impurity_fn):
+<NotebookCell language="python" code={`def compute_information_gain(X, Y, node_indices, feature_idx, split_criterion):
     """
     Compute the information gain from splitting on a feature.
 
@@ -185,7 +187,7 @@ The function below works with either impurity measure (entropy or Gini) by accep
         Y (np.ndarray): Full label array
         node_indices (list): Indices at the current node
         feature_idx (int): Feature to evaluate
-        impurity_fn (callable): Either compute_entropy or compute_gini_index
+        split_criterion (callable): Either compute_entropy or compute_gini_index
 
     Returns:
         float: Information gain (always >= 0)
@@ -202,12 +204,12 @@ The function below works with either impurity measure (entropy or Gini) by accep
     n = len(node_indices)
 
     # Impurity before splitting
-    h_node = impurity_fn(Y_node)
+    h_node = split_criterion(Y_node)
 
     # Weighted impurity after splitting (each side weighted by its size)
     w_left = len(left_indices) / n
     w_right = len(right_indices) / n
-    weighted_impurity = w_left * impurity_fn(Y_left) + w_right * impurity_fn(Y_right)
+    weighted_impurity = w_left * split_criterion(Y_left) + w_right * split_criterion(Y_right)
 
     # The reduction in impurity is the information gain
     return h_node - weighted_impurity`} outputs={[]} />
@@ -218,7 +220,7 @@ The function below works with either impurity measure (entropy or Gini) by accep
 At each node, we evaluate every feature and pick the one with the highest information gain. We also skip features that don't actually split the data (all examples go to one side).
 
 
-<NotebookCell language="python" code={`def get_best_split(X, Y, node_indices, feature_names, impurity_fn):
+<NotebookCell language="python" code={`def get_best_split(X, Y, node_indices, feature_names, split_criterion):
     """
     Find the feature that gives the highest information gain.
 
@@ -233,7 +235,7 @@ At each node, we evaluate every feature and pick the one with the highest inform
         Y (np.ndarray): Labels
         node_indices (list): Indices at the current node
         feature_names (list): Names of features (for indexing)
-        impurity_fn (callable): Impurity function to use
+        split_criterion (callable): Impurity function to use
 
     Returns:
         tuple: (best_feature_idx, max_info_gain)
@@ -251,7 +253,7 @@ At each node, we evaluate every feature and pick the one with the highest inform
             continue
 
         # Compute how good this split is
-        info_gain = compute_information_gain(X, Y, node_indices, feature_idx, impurity_fn)
+        info_gain = compute_information_gain(X, Y, node_indices, feature_idx, split_criterion)
 
         # Track the best one
         if info_gain > max_info_gain:
@@ -278,82 +280,91 @@ We stop splitting when:
 This recursive structure is what gives decision trees their characteristic tree shape.
 
 
-<NotebookCell language="python" code={`def build_tree(X, Y, node_indices, feature_names, impurity_fn, max_depth=32, current_depth=0, tree=None):
+<NotebookCell language="python" code={`def build_tree(X, Y, node_indices, feature_names, split_criterion, max_depth=32, current_depth=0):
     """
-    Recursively build a decision tree using a top-down greedy approach.
+    Recursively build a decision tree.
 
-    At each node, we find the best feature to split on, divide the data,
-    then recurse on each side. The recursion stops when:
-        - We hit max_depth
-        - The node has no examples
-        - All examples have the same label (pure node)
-        - No split provides positive information gain
-        - A candidate split produces an empty side
+    Returns a nested dictionary where each node is either:
+        - A leaf with a prediction
+        - A split with 'left' and 'right' child trees
 
     Args:
         X (np.ndarray): Feature matrix
         Y (np.ndarray): Labels
-        node_indices (list): Indices at the current node
-        feature_names (list): Names of features
-        impurity_fn (callable): compute_entropy or compute_gini_index
-        max_depth (int): Maximum depth of the tree (regularization)
-        current_depth (int): Current depth in the recursion (internal use)
-        tree (list): Accumulator that collects all splits (internal use)
+        node_indices (list): Indices of examples at this node
+        feature_names (list): Names of features (for readability)
+        split_criterion (callable): compute_entropy or compute_gini_index
+        max_depth (int): Maximum tree depth
+        current_depth (int): Current depth (internal use)
 
     Returns:
-        list: A list of split records describing the tree structure
+        dict: The tree structure
     """
-    # Initialize the tree list on the first call (avoids mutable default argument bug)
-    if tree is None:
-        tree = []
-
-    # Labels at the current node
     Y_node = Y[node_indices]
 
-    # Stopping conditions
-    if current_depth == max_depth:
-        return tree
-    if len(Y_node) == 0:
-        return tree
-    if len(np.unique(Y_node)) == 1:
-        # Pure node: all examples have the same label, no need to split further
-        return tree
+    # Stopping conditions → create a leaf
+    if (current_depth == max_depth or
+        len(Y_node) == 0 or
+        len(np.unique(Y_node)) == 1):
+
+        prediction = int(round(np.mean(Y_node))) if len(Y_node) > 0 else 0
+        return {
+            'type': 'leaf',
+            'prediction': prediction,
+            'samples': len(Y_node)
+        }
 
     # Find the best feature to split on
-    best_idx, info_gain = get_best_split(X, Y, node_indices, feature_names, impurity_fn)
+    best_idx, info_gain = get_best_split(X, Y, node_indices, feature_names, split_criterion)
 
-    # If no split helps, stop
+    # No useful split → leaf
     if info_gain <= 0:
-        return tree
+        prediction = int(round(np.mean(Y_node)))
+        return {
+            'type': 'leaf',
+            'prediction': prediction,
+            'samples': len(Y_node)
+        }
 
-    # Split the data based on the best feature
+    # Split the data
     left_indices, right_indices = split_dataset(X, node_indices, best_idx)
 
-    # Safety check: if either side is empty, don't split
+    # Empty split → leaf
     if len(left_indices) == 0 or len(right_indices) == 0:
-        return tree
+        prediction = int(round(np.mean(Y_node)))
+        return {
+            'type': 'leaf',
+            'prediction': prediction,
+            'samples': len(Y_node)
+        }
 
-    # Record this split as part of the tree
-    tree.append({
-        'depth': current_depth,
+    # Recurse to build subtrees
+    return {
+        'type': 'split',
         'feature_idx': best_idx,
         'feature_name': feature_names[best_idx],
-        'left_indices': left_indices,
-        'right_indices': right_indices,
-        'info_gain': info_gain
-    })
+        'left': build_tree(X, Y, left_indices, feature_names, split_criterion, max_depth, current_depth + 1),
+        'right': build_tree(X, Y, right_indices, feature_names, split_criterion, max_depth, current_depth + 1)
+    }`} outputs={[]} />
 
-    # Print the split with indentation showing depth (useful for understanding the tree)
-    indent = "  " * current_depth
-    print(f"{indent}Split on '{feature_names[best_idx]}' (gain={info_gain:.4f})")
-    print(f"{indent}  Left:  {left_indices}")
-    print(f"{indent}  Right: {right_indices}")
 
-    # Recurse on each side, increasing depth
-    build_tree(X, Y, left_indices, feature_names, impurity_fn, max_depth, current_depth + 1, tree)
-    build_tree(X, Y, right_indices, feature_names, impurity_fn, max_depth, current_depth + 1, tree)
+## Print tree
 
-    return tree`} outputs={[]} />
+Let's write a function that will print a minimal visualization of the tree
+
+
+<NotebookCell language="python" code={`def print_tree(tree, indent=0, prefix=""):
+    """Pretty-print a decision tree as ASCII."""
+    pad = "  " * indent
+
+    if tree['type'] == 'leaf':
+        marker = "✓" if tree['prediction'] == 1 else "✗"
+        print(f"{pad}{prefix}{marker} Predict {tree['prediction']} (n={tree['samples']})")
+    else:
+        gain_str = f" (gain={tree['info_gain']:.4f})" if 'info_gain' in tree else ""
+        print(f"{pad}{prefix}[{tree['feature_name']}]{gain_str}")
+        print_tree(tree['left'], indent + 1, "├─ if 1: ")
+        print_tree(tree['right'], indent + 1, "└─ if 0: ")`} outputs={[]} />
 
 
 ## Try it on a small example
@@ -379,7 +390,8 @@ feature_names = ['Ear Shape', 'Face Shape', 'Whiskers']
 root_indices = list(range(len(X_toy)))
 
 print("Building tree with entropy:")
-tree_toy = build_tree(X_toy, Y_toy, root_indices, feature_names, compute_entropy, max_depth=2)`} outputs={[{"type":"stream","name":"stdout","text":"Building tree with entropy:\nSplit on 'Ear Shape' (gain=0.2781)\n  Left: [0, 3, 4, 5, 7]\n  Right: [1, 2, 6, 8, 9]\n  Split on 'Face Shape' (gain=0.7219)\n    Left: [0, 4, 5, 7]\n    Right: [3]\n  Split on 'Whiskers' (gain=0.7219)\n    Left: [1]\n    Right: [2, 6, 8, 9]\n"}]} />
+tree_toy = build_tree(X_toy, Y_toy, root_indices, feature_names, compute_entropy, max_depth=2)
+print_tree(tree_toy)`} outputs={[{"type":"stream","name":"stdout","text":"Building tree with entropy:\n[Ear Shape]\n  ├─ if 1: [Face Shape]\n    ├─ if 1: ✓ Predict 1 (n=4)\n    └─ if 0: ✗ Predict 0 (n=1)\n  └─ if 0: [Whiskers]\n    ├─ if 1: ✓ Predict 1 (n=1)\n    └─ if 0: ✗ Predict 0 (n=4)\n"}]} />
 
 
 ## Training on a real dataset
@@ -428,84 +440,13 @@ print(f"Test set:     {len(X_test)} examples")`} outputs={[{"type":"stream","nam
 train_root = list(range(len(X_train)))
 
 print("Building tree on training data:\\n")
-tree = build_tree(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=5)`} outputs={[{"type":"stream","name":"stdout","text":"Building tree on training data:\n\nSplit on 'feature_2' (gain=0.1589)\n  Left: [2, 3, 4, 5, 9, 10, 11, 13, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 33, 34, 37, 38, 45, 46, 48, 51, 52, 58, 59, 61, 62, 63, 65, 66, 67, 69, 74, 77, 80, 83, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 99, 100, 102, 108, 110, 114, 115, 117, 119, 124, 126, 127, 128, 129, 133, 134, 135, 136, 137, 140, 141, 142, 145, 149, 152, 158, 162, 164, 167, 170, 171, 173, 175, 176, 177, 178, 180, 181, 182, 183, 184, 185, 186, 187, 189, 190, 192, 193, 194, 195, 198, 199, 204, 209, 212, 213, 214, 217, 219, 221, 222, 223, 228, 232, 236, 238, 242, 244, 248, 251, 252, 253, 254, 255, 256, 257, 258, 259, 264, 266, 271, 272, 275, 277, 278, 280, 281, 283, 284, 287, 289, 293, 298, 299, 303, 304, 305, 306, 308, 311, 315, 316, 317, 318, 322, 323, 324, 326, 330, 331, 334, 335, 337, 338, 339, 340, 344, 345, 346, 347, 349, 350, 351, 355, 358, 360, 361, 362, 370, 376, 378, 380, 381, 382, 387, 391, 392, 393, 395, 396, 397]\n  Right: [0, 1, 6, 7, 8, 12, 14, 15, 16, 19, 23, 31, 32, 35, 36, 39, 40, 41, 42, 43, 44, 47, 49, 50, 53, 54, 55, 56, 57, 60, 64, 68, 70, 71, 72, 73, 75, 76, 78, 79, 81, 82, 84, 85, 87, 90, 93, 101, 103, 104, 105, 106, 107, 109, 111, 112, 113, 116, 118, 120, 121, 122, 123, 125, 130, 131, 132, 138, 139, 143, 144, 146, 147, 148, 150, 151, 153, 154, 155, 156, 157, 159, 160, 161, 163, 165, 166, 168, 169, 172, 174, 179, 188, 191, 196, 197, 200, 201, 202, 203, 205, 206, 207, 208, 210, 211, 215, 216, 218, 220, 224, 225, 226, 227, 229, 230, 231, 233, 234, 235, 237, 239, 240, 241, 243, 245, 246, 247, 249, 250, 260, 261, 262, 263, 265, 267, 268, 269, 270, 273, 274, 276, 279, 282, 285, 286, 288, 290, 291, 292, 294, 295, 296, 297, 300, 301, 302, 307, 309, 310, 312, 313, 314, 319, 320, 321, 325, 327, 328, 329, 332, 333, 336, 341, 342, 343, 348, 352, 353, 354, 356, 357, 359, 363, 364, 365, 366, 367, 368, 369, 371, 372, 373, 374, 375, 377, 379, 383, 384, 385, 386, 388, 389, 390, 394, 398, 399]\n  Split on 'feature_3' (gain=0.3774)\n    Left: [5, 13, 18, 24, 26, 28, 29, 34, 45, 48, 51, 58, 59, 61, 65, 74, 89, 92, 96, 97, 98, 102, 114, 115, 117, 133, 134, 135, 137, 140, 141, 158, 164, 171, 173, 175, 176, 178, 180, 182, 185, 193, 194, 217, 221, 222, 223, 236, 238, 244, 252, 253, 254, 264, 266, 272, 278, 280, 283, 284, 289, 293, 298, 303, 305, 306, 315, 316, 317, 326, 330, 335, 339, 340, 345, 346, 347, 360, 361, 381, 382, 387, 391, 395]\n    Right: [2, 3, 4, 9, 10, 11, 17, 20, 21, 22, 25, 27, 30, 33, 37, 38, 46, 52, 62, 63, 66, 67, 69, 77, 80, 83, 86, 88, 91, 94, 95, 99, 100, 108, 110, 119, 124, 126, 127, 128, 129, 136, 142, 145, 149, 152, 162, 167, 170, 177, 181, 183, 184, 186, 187, 189, 190, 192, 195, 198, 199, 204, 209, 212, 213, 214, 219, 228, 232, 242, 248, 251, 255, 256, 257, 258, 259, 271, 275, 277, 281, 287, 299, 304, 308, 311, 318, 322, 323, 324, 331, 334, 337, 338, 344, 349, 350, 351, 355, 358, 362, 370, 376, 378, 380, 392, 393, 396, 397]\n    Split on 'feature_1' (gain=0.2361)\n      Left: [13, 24, 26, 28, 48, 51, 58, 74, 89, 92, 97, 117, 135, 137, 141, 164, 171, 175, 176, 180, 185, 193, 194, 221, 223, 236, 244, 252, 254, 264, 272, 280, 284, 293, 303, 305, 306, 315, 326, 330, 345, 347, 360, 361, 382, 395]\n      Right: [5, 18, 29, 34, 45, 59, 61, 65, 96, 98, 102, 114, 115, 133, 134, 140, 158, 173, 178, 182, 217, 222, 238, 253, 266, 278, 283, 289, 298, 316, 317, 335, 339, 340, 346, 381, 387, 391]\n      Split on 'feature_0' (gain=0.7420)\n        Left: [13, 24, 26, 92, 97, 135, 137, 164, 175, 176, 185, 194, 244, 252, 272, 284, 293, 315, 330, 345, 347, 361, 395]\n        Right: [28, 48, 51, 58, 74, 89, 117, 141, 171, 180, 193, 221, 223, 236, 254, 264, 280, 303, 305, 306, 326, 360, 382]\n        Split on 'feature_4' (gain=0.0478)\n          Left: [24, 135, 175, 176, 185, 194, 284, 293, 315, 345, 347]\n          Right: [13, 26, 92, 97, 137, 164, 244, 252, 272, 330, 361, 395]\n        Split on 'feature_4' (gain=0.0690)\n          Left: [28, 51, 58, 89, 117, 171, 180, 193, 221, 223, 236, 254, 280, 360, 382]\n          Right: [48, 74, 141, 264, 303, 305, 306, 326]\n      Split on 'feature_0' (gain=0.0361)\n        Left: [5, 34, 45, 59, 61, 96, 114, 115, 133, 134, 140, 158, 178, 217, 253, 266, 289, 298, 316, 317, 346, 387, 391]\n        Right: [18, 29, 65, 98, 102, 173, 182, 222, 238, 278, 283, 335, 339, 340, 381]\n        Split on 'feature_4' (gain=0.0772)\n          Left: [18, 65, 102, 173, 238, 278, 335, 381]\n          Right: [29, 98, 182, 222, 283, 339, 340]\n    Split on 'feature_0' (gain=0.0198)\n      Left: [2, 20, 33, 37, 38, 46, 66, 67, 77, 80, 86, 95, 99, 100, 108, 119, 129, 142, 145, 149, 152, 162, 167, 181, 183, 189, 190, 192, 195, 198, 209, 212, 214, 219, 242, 251, 256, 257, 258, 271, 275, 322, 323, 324, 331, 334, 337, 349, 350, 351, 358, 362, 380, 392]\n      Right: [3, 4, 9, 10, 11, 17, 21, 22, 25, 27, 30, 52, 62, 63, 69, 83, 88, 91, 94, 110, 124, 126, 127, 128, 136, 170, 177, 184, 186, 187, 199, 204, 213, 228, 232, 248, 255, 259, 277, 281, 287, 299, 304, 308, 311, 318, 338, 344, 355, 370, 376, 378, 393, 396, 397]\n      Split on 'feature_4' (gain=0.0178)\n        Left: [2, 37, 38, 66, 77, 80, 86, 100, 108, 129, 142, 181, 195, 198, 212, 214, 242, 251, 256, 257, 258, 337, 349, 350, 351, 358]\n        Right: [20, 33, 46, 67, 95, 99, 119, 145, 149, 152, 162, 167, 183, 189, 190, 192, 209, 219, 271, 275, 322, 323, 324, 331, 334, 362, 380, 392]\n        Split on 'feature_1' (gain=0.0406)\n          Left: [20, 33, 46, 95, 119, 152, 162, 167, 183, 189, 324, 331, 334]\n          Right: [67, 99, 145, 149, 190, 192, 209, 219, 271, 275, 322, 323, 362, 380, 392]\n      Split on 'feature_5' (gain=0.0261)\n        Left: [4, 9, 27, 52, 62, 63, 69, 83, 88, 94, 110, 126, 128, 136, 184, 186, 187, 204, 213, 228, 232, 281, 287, 311, 318, 344, 370, 396]\n        Right: [3, 10, 11, 17, 21, 22, 25, 30, 91, 124, 127, 170, 177, 199, 248, 255, 259, 277, 299, 304, 308, 338, 355, 376, 378, 393, 397]\n        Split on 'feature_4' (gain=0.0057)\n          Left: [4, 9, 27, 52, 62, 63, 69, 83, 88, 128, 136, 184, 187, 213, 287, 311, 344]\n          Right: [94, 110, 126, 186, 204, 228, 232, 281, 318, 370, 396]\n        Split on 'feature_4' (gain=0.0402)\n          Left: [3, 17, 25, 30, 170, 177, 199, 259, 277, 304, 308, 338, 355, 397]\n          Right: [10, 11, 21, 22, 91, 124, 127, 248, 255, 299, 376, 378, 393]\n  Split on 'feature_1' (gain=0.1831)\n    Left: [0, 6, 7, 8, 12, 19, 23, 31, 41, 42, 47, 49, 56, 72, 75, 78, 81, 85, 87, 90, 93, 101, 104, 112, 121, 122, 123, 132, 138, 139, 150, 153, 155, 157, 159, 160, 161, 163, 166, 168, 174, 179, 191, 196, 203, 208, 211, 215, 216, 220, 226, 229, 233, 234, 235, 237, 261, 262, 269, 270, 282, 285, 286, 288, 292, 295, 296, 297, 302, 313, 319, 321, 327, 329, 333, 336, 341, 342, 343, 352, 353, 354, 356, 357, 364, 366, 367, 371, 372, 373, 375, 383, 386, 389, 398]\n    Right: [1, 14, 15, 16, 32, 35, 36, 39, 40, 43, 44, 50, 53, 54, 55, 57, 60, 64, 68, 70, 71, 73, 76, 79, 82, 84, 103, 105, 106, 107, 109, 111, 113, 116, 118, 120, 125, 130, 131, 143, 144, 146, 147, 148, 151, 154, 156, 165, 169, 172, 188, 197, 200, 201, 202, 205, 206, 207, 210, 218, 224, 225, 227, 230, 231, 239, 240, 241, 243, 245, 246, 247, 249, 250, 260, 263, 265, 267, 268, 273, 274, 276, 279, 290, 291, 294, 300, 301, 307, 309, 310, 312, 314, 320, 325, 328, 332, 348, 359, 363, 365, 368, 369, 374, 377, 379, 384, 385, 388, 390, 394, 399]\n    Split on 'feature_0' (gain=0.5974)\n      Left: [0, 23, 31, 42, 49, 78, 87, 101, 112, 121, 123, 155, 157, 159, 168, 174, 179, 191, 211, 215, 216, 220, 233, 235, 237, 285, 286, 288, 292, 297, 313, 319, 329, 336, 342, 354, 356, 371]\n      Right: [6, 7, 8, 12, 19, 41, 47, 56, 72, 75, 81, 85, 90, 93, 104, 122, 132, 138, 139, 150, 153, 160, 161, 163, 166, 196, 203, 208, 226, 229, 234, 261, 262, 269, 270, 282, 295, 296, 302, 321, 327, 333, 341, 343, 352, 353, 357, 364, 366, 367, 372, 373, 375, 383, 386, 389, 398]\n      Split on 'feature_5' (gain=0.0838)\n        Left: [0, 42, 87, 121, 155, 157, 159, 168, 174, 179, 191, 216, 220, 233, 286, 292, 342, 356, 371]\n        Right: [23, 31, 49, 78, 101, 112, 123, 211, 215, 235, 237, 285, 288, 297, 313, 319, 329, 336, 354]\n        Split on 'feature_4' (gain=0.0044)\n          Left: [23, 31, 123, 211, 235, 237, 288, 313]\n          Right: [49, 78, 101, 112, 215, 285, 297, 319, 329, 336, 354]\n      Split on 'feature_3' (gain=0.0115)\n        Left: [12, 19, 47, 72, 75, 81, 93, 122, 132, 139, 160, 163, 166, 196, 208, 226, 229, 262, 269, 321, 341, 343, 353, 357, 366, 373, 383]\n        Right: [6, 7, 8, 41, 56, 85, 90, 104, 138, 150, 153, 161, 203, 234, 261, 270, 282, 295, 296, 302, 327, 333, 352, 364, 367, 372, 375, 386, 389, 398]\n        Split on 'feature_5' (gain=0.0446)\n          Left: [72, 81, 132, 139, 208, 226, 269, 321, 341, 343, 357, 373]\n          Right: [12, 19, 47, 75, 93, 122, 160, 163, 166, 196, 229, 262, 353, 366, 383]\n        Split on 'feature_4' (gain=0.0004)\n          Left: [6, 8, 41, 85, 138, 161, 282, 296, 327, 352, 375]\n          Right: [7, 56, 90, 104, 150, 153, 203, 234, 261, 270, 295, 302, 333, 364, 367, 372, 386, 389, 398]\n    Split on 'feature_0' (gain=0.0226)\n      Left: [1, 16, 35, 36, 44, 50, 53, 55, 57, 60, 68, 70, 73, 82, 84, 103, 106, 111, 118, 120, 125, 131, 143, 147, 148, 151, 165, 172, 188, 197, 202, 205, 207, 210, 225, 230, 239, 241, 243, 246, 249, 260, 263, 265, 267, 273, 274, 294, 300, 309, 310, 312, 314, 325, 328, 332, 369, 377, 384, 385, 388, 390, 394]\n      Right: [14, 15, 32, 39, 40, 43, 54, 64, 71, 76, 79, 105, 107, 109, 113, 116, 130, 144, 146, 154, 156, 169, 200, 201, 206, 218, 224, 227, 231, 240, 245, 247, 250, 268, 276, 279, 290, 291, 301, 307, 320, 348, 359, 363, 365, 368, 374, 379, 399]\n      Split on 'feature_4' (gain=0.0270)\n        Left: [36, 60, 68, 73, 103, 131, 143, 147, 165, 202, 210, 230, 241, 246, 260, 265, 267, 309, 314, 388]\n        Right: [1, 16, 35, 44, 50, 53, 55, 57, 70, 82, 84, 106, 111, 118, 120, 125, 148, 151, 172, 188, 197, 205, 207, 225, 239, 243, 249, 263, 273, 274, 294, 300, 310, 312, 325, 328, 332, 369, 377, 384, 385, 390, 394]\n        Split on 'feature_3' (gain=0.0053)\n          Left: [1, 16, 44, 55, 57, 84, 106, 125, 172, 207, 225, 239, 249, 273, 274, 312, 332, 384, 385, 390, 394]\n          Right: [35, 50, 53, 70, 82, 111, 118, 120, 148, 151, 188, 197, 205, 243, 263, 294, 300, 310, 325, 328, 369, 377]\n"}]} />
+tree = build_tree(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=5)
+print_tree(tree)`} outputs={[{"type":"stream","name":"stdout","text":"Building tree on training data:\n\n[feature_2]\n  ├─ if 1: [feature_3]\n    ├─ if 1: [feature_1]\n      ├─ if 1: [feature_0]\n        ├─ if 1: [feature_4]\n          ├─ if 1: ✓ Predict 1 (n=11)\n          └─ if 0: ✓ Predict 1 (n=12)\n        └─ if 0: [feature_4]\n          ├─ if 1: ✗ Predict 0 (n=15)\n          └─ if 0: ✗ Predict 0 (n=8)\n      └─ if 0: [feature_0]\n        ├─ if 1: ✗ Predict 0 (n=23)\n        └─ if 0: [feature_4]\n          ├─ if 1: ✗ Predict 0 (n=8)\n          └─ if 0: ✗ Predict 0 (n=7)\n    └─ if 0: [feature_0]\n      ├─ if 1: [feature_4]\n        ├─ if 1: ✓ Predict 1 (n=26)\n        └─ if 0: [feature_1]\n          ├─ if 1: ✓ Predict 1 (n=13)\n          └─ if 0: ✓ Predict 1 (n=15)\n      └─ if 0: [feature_5]\n        ├─ if 1: [feature_4]\n          ├─ if 1: ✓ Predict 1 (n=17)\n          └─ if 0: ✓ Predict 1 (n=11)\n        └─ if 0: [feature_4]\n          ├─ if 1: ✓ Predict 1 (n=14)\n          └─ if 0: ✓ Predict 1 (n=13)\n  └─ if 0: [feature_1]\n    ├─ if 1: [feature_0]\n      ├─ if 1: [feature_5]\n        ├─ if 1: ✓ Predict 1 (n=19)\n        └─ if 0: [feature_4]\n          ├─ if 1: ✓ Predict 1 (n=8)\n          └─ if 0: ✓ Predict 1 (n=11)\n      └─ if 0: [feature_3]\n        ├─ if 1: [feature_5]\n          ├─ if 1: ✗ Predict 0 (n=12)\n          └─ if 0: ✗ Predict 0 (n=15)\n        └─ if 0: [feature_4]\n          ├─ if 1: ✗ Predict 0 (n=11)\n          └─ if 0: ✗ Predict 0 (n=19)\n    └─ if 0: [feature_0]\n      ├─ if 1: [feature_4]\n        ├─ if 1: ✗ Predict 0 (n=20)\n        └─ if 0: [feature_3]\n          ├─ if 1: ✗ Predict 0 (n=21)\n          └─ if 0: ✗ Predict 0 (n=22)\n      └─ if 0: ✗ Predict 0 (n=49)\n"}]} />
 
 
 ## Making predictions
 
 Building the tree gave us a list of splits. To make a prediction on a new example, we need to walk through the tree from the root, following the appropriate branch at each split, until we reach a leaf.
-
-The structure we built earlier uses indices, which is great for training but harder to use for prediction. For a cleaner implementation, let's build a proper tree structure that can be traversed.
-
-
-<NotebookCell language="python" code={`def build_tree_structured(X, Y, node_indices, feature_names, impurity_fn, max_depth=32, current_depth=0):
-    """
-    Build a decision tree as a nested dictionary that can be used for prediction.
-
-    Unlike build_tree (which returns a flat list of splits), this returns a
-    proper tree structure where each node is either:
-        - A leaf with a prediction
-        - A split with 'left' and 'right' child trees
-
-    This structure is what we use for actually predicting on new examples,
-    since we can recursively walk it.
-
-    Args:
-        Same as build_tree
-
-    Returns:
-        dict: A nested dict representing the tree.
-              Leaf nodes have keys: 'type', 'prediction', 'samples'
-              Split nodes have keys: 'type', 'feature_idx', 'feature_name', 'left', 'right'
-    """
-    Y_node = Y[node_indices]
-
-    # Check stopping conditions — create a leaf if any apply
-    if (current_depth == max_depth or
-        len(Y_node) == 0 or
-        len(np.unique(Y_node)) == 1):
-
-        # Predict the majority class at this leaf
-        # If empty (shouldn't happen normally), default to 0
-        prediction = int(round(np.mean(Y_node))) if len(Y_node) > 0 else 0
-        return {
-            'type': 'leaf',
-            'prediction': prediction,
-            'samples': len(Y_node)
-        }
-
-    # Find the best feature to split on
-    best_idx, info_gain = get_best_split(X, Y, node_indices, feature_names, impurity_fn)
-
-    # If no useful split, create a leaf with majority prediction
-    if info_gain <= 0:
-        prediction = int(round(np.mean(Y_node)))
-        return {
-            'type': 'leaf',
-            'prediction': prediction,
-            'samples': len(Y_node)
-        }
-
-    # Split the data
-    left_indices, right_indices = split_dataset(X, node_indices, best_idx)
-
-    # Safety: if either side ends up empty, make this a leaf
-    if len(left_indices) == 0 or len(right_indices) == 0:
-        prediction = int(round(np.mean(Y_node)))
-        return {
-            'type': 'leaf',
-            'prediction': prediction,
-            'samples': len(Y_node)
-        }
-
-    # Create a split node and recursively build both subtrees
-    return {
-        'type': 'split',
-        'feature_idx': best_idx,
-        'feature_name': feature_names[best_idx],
-        'left': build_tree_structured(X, Y, left_indices, feature_names, impurity_fn, max_depth, current_depth + 1),
-        'right': build_tree_structured(X, Y, right_indices, feature_names, impurity_fn, max_depth, current_depth + 1)
-    }`} outputs={[]} />
 
 
 <NotebookCell language="python" code={`def predict_one(tree, x):
@@ -522,7 +463,7 @@ The structure we built earlier uses indices, which is great for training but har
     Returns:
         int: The predicted class (0 or 1)
     """
-    # Base case: leaf node — return its prediction
+    # Base case: leaf node, return its prediction
     if tree['type'] == 'leaf':
         return tree['prediction']
 
@@ -555,7 +496,7 @@ Now we train on the training set, predict on the test set, and measure accuracy.
 
 
 <NotebookCell language="python" code={`train_root = list(range(len(X_train)))
-tree_model = build_tree_structured(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=5)
+tree_model = build_tree(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=5)
 
 # Predictions
 train_preds = predict(tree_model, X_train)
@@ -569,8 +510,8 @@ print(f"Training accuracy: {train_acc:.4f}")
 print(f"Test accuracy:     {test_acc:.4f}")`} outputs={[{"type":"stream","name":"stdout","text":"Training accuracy: 0.9525\nTest accuracy:     0.9700\n"}]} />
 
 
-<NotebookCell language="python" code={`tree_entropy = build_tree_structured(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=5)
-tree_gini = build_tree_structured(X_train, Y_train, train_root, feature_names, compute_gini_index, max_depth=5)
+<NotebookCell language="python" code={`tree_entropy = build_tree(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=5)
+tree_gini = build_tree(X_train, Y_train, train_root, feature_names, compute_gini_index, max_depth=5)
 
 acc_entropy = (predict(tree_entropy, X_test) == Y_test).mean()
 acc_gini = (predict(tree_gini, X_test) == Y_test).mean()
@@ -584,14 +525,12 @@ print(f"Test accuracy with Gini:    {acc_gini:.4f}")`} outputs={[{"type":"stream
 A deeper tree fits the training data better but may overfit. Let's plot training and test accuracy for different depths.
 
 
-<NotebookCell language="python" code={`import matplotlib.pyplot as plt
-
-depths = range(1, 11)
+<NotebookCell language="python" code={`depths = range(1, 11)
 train_accs = []
 test_accs = []
 
 for d in depths:
-    tree_d = build_tree_structured(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=d)
+    tree_d = build_tree(X_train, Y_train, train_root, feature_names, compute_entropy, max_depth=d)
     train_accs.append((predict(tree_d, X_train) == Y_train).mean())
     test_accs.append((predict(tree_d, X_test) == Y_test).mean())
 
@@ -609,12 +548,12 @@ plt.show()`} outputs={[{"type":"image","mime":"image/png","data":"iVBORw0KGgoAAA
 
 In this tutorial, we implemented a decision tree classifier from scratch:
 
-1. **Impurity measures** (entropy, Gini) — to quantify how mixed labels are at each node
-2. **Splitting logic** — to partition data based on feature values
-3. **Information gain** — to score and rank candidate splits
-4. **Recursive tree construction** — to build the tree top-down
-5. **Prediction** — to traverse the tree for new examples
-6. **Evaluation** — to measure accuracy on a held-out test set
+1. **Impurity measures(entropy, Gini):** to quantify how mixed labels are at each node
+2. **Splitting logic:** to partition data based on feature values
+3. **Information gain:** to score and rank candidate splits
+4. **Recursive tree construction:** to build the tree top-down
+5. **Prediction:** to traverse the tree for new examples
+6. **Evaluation:** to measure accuracy on a held-out test set
 
 The same principles power production tools like sklearn's `DecisionTreeClassifier`, but with optimizations for speed and additional features like continuous-valued splits and pruning.
 
@@ -622,7 +561,7 @@ The same principles power production tools like sklearn's `DecisionTreeClassifie
 
 - Only handles binary features (extending to continuous requires trying threshold splits)
 - No pruning (we rely on `max_depth` as our only regularization)
-- Trees are sensitive to training data — small changes produce different trees
+- Trees are sensitive to training data, small changes produce different trees
 
 **Next steps to explore:**
 
@@ -633,4 +572,6 @@ The same principles power production tools like sklearn's `DecisionTreeClassifie
 - Compare with `sklearn.tree.DecisionTreeClassifier` on the same data
 
 Decision trees alone are a starting point. The real power comes from **tree ensembles** like random forests and gradient boosting (XGBoost), which combine many trees to dramatically improve accuracy.
+
+
 
