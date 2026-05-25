@@ -47,7 +47,7 @@ A natural question that comes up when learning about neural network is why do we
 
 Without an activation function, transformation from one layer to the becomes a linear transformation. For example, with two layers:
 
-$Z_2 = W_2 (W_1 X + b_1) + b_2 = (W_2 W_1) X + (W_2 b_1 + b_2)$
+$$Z_2 = W_2 (W_1 X + b_1) + b_2 = (W_2 W_1) X + (W_2 b_1 + b_2)$$
 
 This is just another linear function, which can be represented by a single layer and this turns to linear/logistic regression. The depth gives us nothing.
 
@@ -73,15 +73,15 @@ We'll define a few common activations so we can pick which one to use:
 
 **Sigmoid** squashes values into (0, 1). Common at the output layer for binary classification. Used to be common in hidden layers, but causes vanishing gradients in deep networks.
 
-$\sigma(z) = \frac{1}{1 + e^{-z}}$
+$$\sigma(z) = \frac{1}{1 + e^{-z}}$$
 
 **Tanh** is like sigmoid but maps to (-1, 1) and is centered at zero. Often works better than sigmoid in hidden layers.
 
-$\tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}$
+$$\tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}$$
 
 **ReLU** outputs $\max(0, z)$. The default choice for hidden layers in modern networks. Fast to compute and doesn't suffer from vanishing gradients on the positive side.
 
-$\text{ReLU}(z) = \max(0, z)$
+$$\text{ReLU}(z) = \max(0, z)$$
 
 For backpropagation, we also need the derivative of each activation. The derivatives have clean closed forms:
 
@@ -236,11 +236,11 @@ The right initialization scheme depends on the activation function:
 
 **Xavier initialization** for sigmoid and tanh:
 
-$W^{[l]} \sim \mathbf{N}\left(0, \frac{1}{n^{[l-1]}}\right)$
+$$W^{[l]} \sim \mathbf{N}\left(0, \frac{1}{n^{[l-1]}}\right)$$
 
 **He initialization** for ReLU:
 
-$W^{[l]} \sim \mathbf{N}\left(0, \frac{2}{n^{[l-1]}}\right)$
+$$W^{[l]} \sim \mathbf{N}\left(0, \frac{2}{n^{[l-1]}}\right)$$
 
 The factor of 2 in He init compensates for the fact that ReLU zeros out half the activations on average, so weights need to be slightly larger to maintain variance across layers.
 
@@ -284,8 +284,8 @@ Biases are always initialized to zero.
 
 Forward propagation computes the network's output for a given input. We pass the input through each layer in sequence, computing:
 
-$Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$
-$A^{[l]} = g^{[l]}(Z^{[l]})$
+$$Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$$
+$$A^{[l]} = g^{[l]}(Z^{[l]})$$
 
 Where $A^{[0]} = X$ (the input is the activation of layer 0) and $g^{[l]}$ is the activation function for layer $l$.
 
@@ -353,19 +353,19 @@ Backward propagation computes how each weight should change to reduce the loss. 
 
 At each layer, we compute three things:
 
-$
+$$
 \begin{aligned}
 dZ^{[l]} &= (W^{[l+1]T} \cdot dZ^{[l+1]}) \odot g'^{[l]}(Z^{[l]}) \\
 dW^{[l]} &= \frac{1}{m} dZ^{[l]} \cdot (A^{[l-1]})^T \\
 db^{[l]} &= \frac{1}{m} \sum dZ^{[l]}
 \end{aligned}
-$
+$$
 
 Where $\odot$ is element-wise multiplication.
 
 For the **output layer**, the formula for $dZ$ simplifies dramatically because of how sigmoid and binary cross-entropy interact:
 
-$dZ^{[L]} = A^{[L]} - Y$
+$$dZ^{[L]} = A^{[L]} - Y$$
 
 Notice the recursive structure: $dZ$ for layer $l$ depends on $dZ$ for layer $l+1$. This is why we must walk backward. We can't compute earlier gradients without the later ones.
 
@@ -434,12 +434,12 @@ Notice the recursive structure: $dZ$ for layer $l$ depends on $dZ$ for layer $l+
 
 Once we have the gradients, we apply gradient descent. For each parameter:
 
-$
+$$
 \begin{aligned}
 W^{[l]} &:= W^{[l]} - \alpha \cdot dW^{[l]} \\
 b^{[l]} &:= b^{[l]} - \alpha \cdot db^{[l]}
 \end{aligned}
-$
+$$
 
 Where $\alpha$ is the learning rate. The gradient tells us the direction that increases the loss, so we move in the opposite direction to decrease it.
 

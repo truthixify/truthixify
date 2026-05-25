@@ -178,7 +178,8 @@ async function convertCompanion(companionPath) {
 
   let body
   if (wrapperBody && wrapperBody.includes('<NotebookContent />')) {
-    body = wrapperBody.replace(/<NotebookContent\s*\/>/g, cellsBlock)
+    // Function replacer so $$ in cellsBlock (block math) isn't interpreted as a $ literal.
+    body = wrapperBody.replace(/<NotebookContent\s*\/>/g, () => cellsBlock)
   } else if (wrapperBody && wrapperBody.trim().length) {
     body = `${wrapperBody.trim()}\n\n${cellsBlock}`
   } else {

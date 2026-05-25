@@ -55,13 +55,13 @@ We'll use two common impurity measures:
 
 **Entropy**: from information theory. Measures the unpredictability of the labels.
 
-$H(p) = -p \log_2(p) - (1-p) \log_2(1-p)$
+$$H(p) = -p \log_2(p) - (1-p) \log_2(1-p)$$
 
 Where $p$ is the fraction of positive examples. Entropy is 0 when the group is pure and 1 when classes are exactly split 50/50.
 
 **Gini index**: measures the probability of misclassifying a randomly chosen example.
 
-$G(p) = 1 - p^2 - (1-p)^2 = 2p(1-p)$
+$$G(p) = 1 - p^2 - (1-p)^2 = 2p(1-p)$$
 
 Both behave similarly. Gini is faster to compute (no log), entropy has cleaner information-theoretic meaning. We'll implement both and use them interchangeably.
 
@@ -164,7 +164,7 @@ We track examples by their *indices* in the dataset rather than copying data aro
 
 When we split a node, impurity should decrease. The amount of decrease is **information gain**:
 
-$\text{Information Gain} = H(\text{parent}) - \left[w_\text{left} H(\text{left}) + w_\text{right} H(\text{right})\right]$
+$$\text{Information Gain} = H(\text{parent}) - \left[w_\text{left} H(\text{left}) + w_\text{right} H(\text{right})\right]$$
 
 Where $w_\text{left}$ and $w_\text{right}$ are the fractions of examples going to each child. We pick the split that gives the highest information gain.
 
