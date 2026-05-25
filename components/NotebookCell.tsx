@@ -124,8 +124,10 @@ export default function NotebookCell({
 
   const run = useCallback(async () => {
     if (language !== 'python') return
+    const startedAt = performance.now()
+    const MIN_RUNNING_MS = 500
     setRunning(true)
-    setStatus('Loading Python runtime…')
+    setStatus(window.__pyodidePromise ? 'Running…' : 'Loading Python runtime…')
     setLiveOutputs([])
     stdoutBufRef.current = ''
     stderrBufRef.current = ''
@@ -173,7 +175,14 @@ export default function NotebookCell({
         stdoutBufRef.current += repr
         flush()
       }
-      setStatus('')
+      const elapsed = performance.now() - startedAt
+      if (elapsed < MIN_RUNNING_MS) {
+        await new Promise((r) => setTimeout(r, MIN_RUNNING_MS - elapsed))
+      }
+      const totalMs = performance.now() - startedAt
+      const seconds = totalMs >= 1000 ? (totalMs / 1000).toFixed(1) : (totalMs / 1000).toFixed(2)
+      setStatus(`✓ Done in ${seconds}s`)
+      setTimeout(() => setStatus((s) => (s.startsWith('✓ Done') ? '' : s)), 2500)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setLiveOutputs((prev) => [
@@ -197,8 +206,14 @@ export default function NotebookCell({
         <span className="font-mono text-gray-500 dark:text-gray-400">{language}</span>
         <div className="flex items-center gap-2">
           {status && (
-            <span className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-              {running && (
+            <span
+              className={`inline-flex items-center gap-1.5 ${
+                status.startsWith('✓')
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {running && !status.startsWith('✓') && (
                 <span
                   aria-hidden="true"
                   className="border-primary-500 inline-block h-3 w-3 animate-spin rounded-full border-2 border-t-transparent"
