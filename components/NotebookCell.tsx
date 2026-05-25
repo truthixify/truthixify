@@ -196,7 +196,17 @@ export default function NotebookCell({
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-3 py-1.5 text-xs dark:border-gray-700 dark:bg-gray-800">
         <span className="font-mono text-gray-500 dark:text-gray-400">{language}</span>
         <div className="flex items-center gap-2">
-          {status && <span className="text-gray-500 dark:text-gray-400">{status}</span>}
+          {status && (
+            <span className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+              {running && (
+                <span
+                  aria-hidden="true"
+                  className="border-primary-500 inline-block h-3 w-3 animate-spin rounded-full border-2 border-t-transparent"
+                />
+              )}
+              {status}
+            </span>
+          )}
           <button
             type="button"
             onClick={handleCopy}
@@ -228,19 +238,31 @@ export default function NotebookCell({
                 type="button"
                 onClick={run}
                 disabled={running}
-                className="bg-primary-500 hover:bg-primary-600 rounded px-2 py-0.5 text-white disabled:opacity-50"
+                className="bg-primary-500 hover:bg-primary-600 inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-white disabled:opacity-70"
               >
-                {running ? 'Running…' : '▶ Run'}
+                {running ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    />
+                    Running
+                  </>
+                ) : (
+                  <>▶ Run</>
+                )}
               </button>
             </>
           )}
         </div>
       </div>
       <pre
-        className={`language-${language} overflow-x-auto bg-transparent p-3 text-sm leading-relaxed`}
+        className="overflow-x-auto p-3 text-sm leading-relaxed"
+        style={{ background: 'transparent', margin: 0, border: 0, borderRadius: 0 }}
       >
         <code
           className={`language-${language}`}
+          style={{ background: 'transparent', padding: 0, display: 'block', width: '100%' }}
           dangerouslySetInnerHTML={{ __html: highlighted }}
         />
       </pre>
