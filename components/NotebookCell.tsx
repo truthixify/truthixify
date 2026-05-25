@@ -126,7 +126,8 @@ export default function NotebookCell({
   const run = useCallback(async () => {
     if (language !== 'python') return
     const startedAt = performance.now()
-    const MIN_RUNNING_MS = 500
+    // Randomize so warm runs don't all land on exactly the same duration
+    const MIN_RUNNING_MS = 400 + Math.random() * 350
     setRunning(true)
     setStatus(window.__pyodidePromise ? 'Running…' : 'Loading Python runtime…')
     setLiveOutputs([])
