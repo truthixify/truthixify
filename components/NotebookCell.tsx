@@ -110,6 +110,7 @@ export default function NotebookCell({
 
   const hasSaved = outputs.length > 0
   const shown = liveOutputs ?? (showSaved ? outputs : null)
+  const [outputCollapsed, setOutputCollapsed] = useState(false)
   const highlighted = useMemo(() => highlight(code, language), [code, language])
 
   const handleCopy = useCallback(async () => {
@@ -282,10 +283,31 @@ export default function NotebookCell({
         />
       </pre>
       {shown && shown.length > 0 && (
-        <div className="border-t border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950">
-          {shown.map((o, i) => (
-            <OutputView key={i} output={o} />
-          ))}
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setOutputCollapsed((v) => !v)}
+            className="flex w-full items-center justify-between bg-gray-100 px-3 py-1 text-xs text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            aria-expanded={!outputCollapsed}
+          >
+            <span>
+              Output{shown.length > 1 ? ` · ${shown.length} items` : ''}
+              {liveOutputs ? '' : ' (saved)'}
+            </span>
+            <span
+              aria-hidden="true"
+              className={`inline-block transition-transform ${outputCollapsed ? '' : 'rotate-180'}`}
+            >
+              ▾
+            </span>
+          </button>
+          {!outputCollapsed && (
+            <div className="bg-white px-3 py-2 text-sm dark:bg-gray-950">
+              {shown.map((o, i) => (
+                <OutputView key={i} output={o} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
