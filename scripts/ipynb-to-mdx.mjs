@@ -148,22 +148,32 @@ function serializeFrontmatter(fm, extra) {
   return lines.join('\n')
 }
 
-async function convertOne(ipynbPath) {
-  const basename = path.basename(ipynbPath, '.ipynb')
-  const raw = await fs.readFile(ipynbPath, 'utf8')
-  const notebook = JSON.parse(raw)
+// Process one companion .mdx. The companion's basename drives the output filename
+// (and therefore the URL slug). The companion points at its notebook via `source:`
+// in frontmatter, or falls back to a matching <companion-basename>.ipynb.
+async function convertCompanion(companionPath) {
+  const slug = path.basename(companionPath, '.mdx')
+  const companionRaw = await fs.readFile(companionPath, 'utf8')
+  const { fm: rawFm, body: wrapperBody } = parseFrontmatterBlock(companionRaw)
+  const fm = { ...(rawFm || {}) }
 
-  const companionPath = path.join(NOTEBOOK_DIR, `${basename}.mdx`)
-  let fm = null
-  let wrapperBody = null
-  if (await exists(companionPath)) {
-    const companionRaw = await fs.readFile(companionPath, 'utf8')
-    const parsed = parseFrontmatterBlock(companionRaw)
-    fm = parsed.fm
-    wrapperBody = parsed.body
+  // Resolve the source notebook
+  let ipynbName = fm.source
+  if (ipynbName) {
+    if (!ipynbName.endsWith('.ipynb')) ipynbName += '.ipynb'
+    delete fm.source
+  } else {
+    ipynbName = `${slug}.ipynb`
   }
-  if (!fm) fm = deriveFallbackFrontmatter(notebook, basename)
+  const ipynbPath = path.join(NOTEBOOK_DIR, ipynbName)
+  if (!(await exists(ipynbPath))) {
+    console.warn(
+      `[ipynb-to-mdx] SKIP ${slug}.mdx — source notebook ${ipynbName} not found in data/blog/notebooks/`
+    )
+    return
+  }
 
+  const notebook = JSON.parse(await fs.readFile(ipynbPath, 'utf8'))
   const cellsBlock = renderCellsBlock(notebook)
 
   let body
@@ -175,18 +185,20 @@ async function convertOne(ipynbPath) {
     body = cellsBlock
   }
 
-  const outPath = path.join(OUT_DIR, `${basename}.mdx`)
+  const outPath = path.join(OUT_DIR, `${slug}.mdx`)
   if (await exists(outPath)) {
     const existing = await fs.readFile(outPath, 'utf8')
     if (!existing.includes(GENERATED_MARKER)) {
       console.warn(
-        `[ipynb-to-mdx] SKIP ${basename}.ipynb — data/blog/${basename}.mdx exists and was not generated. Rename one of them.`
+        `[ipynb-to-mdx] SKIP ${slug} — data/blog/${slug}.mdx exists and was not generated. Rename one of them.`
       )
       return
     }
   }
 
-  const ipynbPublicPath = `/notebooks/${basename}.ipynb`
+  // Public copy uses the slug so the download URL matches the post URL.
+  const publicIpynb = `${slug}.ipynb`
+  const ipynbPublicPath = `/notebooks/${publicIpynb}`
   const frontmatter = serializeFrontmatter(fm, {
     notebook: ipynbPublicPath,
     [GENERATED_MARKER]: true,
@@ -195,18 +207,21 @@ async function convertOne(ipynbPath) {
   await fs.writeFile(outPath, `${frontmatter}\n${body}\n`)
 
   await fs.mkdir(PUBLIC_COPY_DIR, { recursive: true })
-  await fs.copyFile(ipynbPath, path.join(PUBLIC_COPY_DIR, `${basename}.ipynb`))
+  await fs.copyFile(ipynbPath, path.join(PUBLIC_COPY_DIR, publicIpynb))
 
-  console.log(`[ipynb-to-mdx] ${path.relative(ROOT, ipynbPath)} → data/blog/${basename}.mdx`)
+  console.log(
+    `[ipynb-to-mdx] notebooks/${path.basename(companionPath)} (+ ${ipynbName}) → data/blog/${slug}.mdx`
+  )
 }
 
 async function convertAll() {
   if (!(await exists(NOTEBOOK_DIR))) return false
-  const files = (await fs.readdir(NOTEBOOK_DIR)).filter((f) => f.endsWith('.ipynb'))
-  if (!files.length) return false
-  for (const f of files) {
+  const entries = await fs.readdir(NOTEBOOK_DIR)
+  const companions = entries.filter((f) => f.endsWith('.mdx'))
+  if (!companions.length) return false
+  for (const f of companions) {
     try {
-      await convertOne(path.join(NOTEBOOK_DIR, f))
+      await convertCompanion(path.join(NOTEBOOK_DIR, f))
     } catch (err) {
       console.error(`[ipynb-to-mdx] failed to convert ${f}:`, err)
       process.exitCode = 1
