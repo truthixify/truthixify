@@ -1,6 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import Prism from 'prismjs'
+import 'prismjs/components/prism-python'
 
 type Output =
   | { type: 'stream'; name: 'stdout' | 'stderr'; text: string }
@@ -16,7 +18,7 @@ interface NotebookCellProps {
   outputs?: Output[]
 }
 
-const PYODIDE_VERSION = '0.26.4'
+const PYODIDE_VERSION = '0.27.2'
 const PYODIDE_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/pyodide.js`
 
 declare global {
@@ -87,24 +89,28 @@ def _install_mpl_shim():
 _install_mpl_shim()
 `
 
-function highlight(code: string): string {
-  // Light Python-flavored highlight without bringing in a full lib.
-  // Keep it simple; the saved-output Prism is already in the page CSS.
-  return code
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+function highlight(code: string, language: string): string {
+  const grammar = Prism.languages[language] ?? Prism.languages.python
+  if (!grammar) return code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return Prism.highlight(code, grammar, language)
 }
 
-export default function NotebookCell({ code, outputs = [], language = 'python' }: NotebookCellProps) {
+export default function NotebookCell({
+  code,
+  outputs = [],
+  language = 'python',
+}: NotebookCellProps) {
   const [liveOutputs, setLiveOutputs] = useState<Output[] | null>(null)
+  const [showSaved, setShowSaved] = useState(false)
   const [running, setRunning] = useState(false)
   const [status, setStatus] = useState<string>('')
   const [copied, setCopied] = useState(false)
   const stdoutBufRef = useRef<string>('')
   const stderrBufRef = useRef<string>('')
 
-  const shown = liveOutputs ?? outputs
+  const hasSaved = outputs.length > 0
+  const shown = liveOutputs ?? (showSaved ? outputs : null)
+  const highlighted = useMemo(() => highlight(code, language), [code, language])
 
   const handleCopy = useCallback(async () => {
     try {
@@ -198,6 +204,15 @@ export default function NotebookCell({ code, outputs = [], language = 'python' }
           >
             {copied ? 'Copied' : 'Copy'}
           </button>
+          {hasSaved && !liveOutputs && (
+            <button
+              type="button"
+              onClick={() => setShowSaved((v) => !v)}
+              className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              {showSaved ? 'Hide output' : 'Show saved output'}
+            </button>
+          )}
           {language === 'python' && (
             <>
               {liveOutputs && (
@@ -221,10 +236,12 @@ export default function NotebookCell({ code, outputs = [], language = 'python' }
           )}
         </div>
       </div>
-      <pre className="overflow-x-auto bg-transparent p-3 text-sm leading-relaxed">
+      <pre
+        className={`language-${language} overflow-x-auto bg-transparent p-3 text-sm leading-relaxed`}
+      >
         <code
           className={`language-${language}`}
-          dangerouslySetInnerHTML={{ __html: highlight(code) }}
+          dangerouslySetInnerHTML={{ __html: highlighted }}
         />
       </pre>
       {shown && shown.length > 0 && (
@@ -243,7 +260,9 @@ function OutputView({ output }: { output: Output }) {
     return (
       <pre
         className={`m-0 bg-transparent p-0 whitespace-pre-wrap ${
-          output.name === 'stderr' ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-gray-200'
+          output.name === 'stderr'
+            ? 'text-red-600 dark:text-red-400'
+            : 'text-gray-800 dark:text-gray-200'
         }`}
       >
         {output.text}
@@ -265,6 +284,7 @@ function OutputView({ output }: { output: Output }) {
   }
   if (output.type === 'image') {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         alt="output"
         src={`data:${output.mime};base64,${output.data}`}

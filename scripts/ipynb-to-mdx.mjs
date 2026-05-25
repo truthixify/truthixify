@@ -74,6 +74,7 @@ function renderCell(cell) {
   }
   if (cell.cell_type === 'code') {
     const code = joinCellSource(cell.source)
+    if (!code.trim()) return ''
     const outputs = normalizeOutputs(cell.outputs || [])
     const escapedCode = escapeTemplateLiteral(code)
     const outputsJson = JSON.stringify(outputs)
@@ -97,9 +98,7 @@ function parseFrontmatterBlock(text) {
     const raw = mm[2].trim()
     if (raw.startsWith('[') && raw.endsWith(']')) {
       const inner = raw.slice(1, -1).trim()
-      parsed[key] = inner
-        ? inner.split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, ''))
-        : []
+      parsed[key] = inner ? inner.split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')) : []
     } else if (raw === 'true' || raw === 'false') {
       parsed[key] = raw === 'true'
     } else if (/^-?\d+(\.\d+)?$/.test(raw)) {
@@ -198,9 +197,7 @@ async function convertOne(ipynbPath) {
   await fs.mkdir(PUBLIC_COPY_DIR, { recursive: true })
   await fs.copyFile(ipynbPath, path.join(PUBLIC_COPY_DIR, `${basename}.ipynb`))
 
-  console.log(
-    `[ipynb-to-mdx] ${path.relative(ROOT, ipynbPath)} → data/blog/${basename}.mdx`
-  )
+  console.log(`[ipynb-to-mdx] ${path.relative(ROOT, ipynbPath)} → data/blog/${basename}.mdx`)
 }
 
 async function main() {
