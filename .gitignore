@@ -50,3 +50,9 @@ app/tag-data.json
 # Others
 my-digital-garden
 CLAUDE.md
+
+# Generated from .ipynb notebooks (regenerated on dev/build)
+/public/notebooks
+
+# TypeScript incremental build info
+tsconfig.tsbuildinfo

@@ -95,7 +95,9 @@ function createSearchIndex(allBlogs) {
 
 export const Blog = defineDocumentType(() => ({
   name: 'Blog',
-  filePathPattern: 'blog/**/*.mdx',
+  // Only top-level posts. Companion files under blog/notebooks/ are sources for the
+  // ipynb-to-mdx converter and must not be picked up as duplicate posts.
+  filePathPattern: 'blog/*.mdx',
   contentType: 'mdx',
   fields: {
     title: { type: 'string', required: true },
@@ -111,6 +113,8 @@ export const Blog = defineDocumentType(() => ({
     canonicalUrl: { type: 'string' },
     series: { type: 'string' },
     part: { type: 'number' },
+    notebook: { type: 'string' },
+    _generatedFromNotebook: { type: 'boolean' },
   },
   computedFields: {
     ...computedFields,
